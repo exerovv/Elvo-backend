@@ -40,6 +40,7 @@ public fun Application.authRouting(config : JWTConfig){
 
         authenticate("jwt-auth"){
             get(""){
+
                 val principal = call.principal<JWTPrincipal>()
                 val username = principal!!.payload.getClaim("username").asString()
                 val expiresAt = principal.expiresAt?.time?.minus(System.currentTimeMillis())
