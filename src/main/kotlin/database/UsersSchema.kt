@@ -1,4 +1,4 @@
-package com.example
+package com.example.database
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.Serializable
