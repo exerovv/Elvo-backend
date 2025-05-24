@@ -24,13 +24,28 @@ class UserDataSourceImpl : UserDataSource {
         }
     }
 
-    override suspend fun insertUser(user: User) {
-        transaction {
-            UserTable.insert {
-                it[username] = user.username
-                it[password] = user.password
-                it[salt] = user.salt
+    override suspend fun insertUser(user: User) : Boolean {
+        try{
+            transaction {
+                UserTable.insert {
+                    it[username] = user.username
+                    it[password] = user.password
+                    it[salt] = user.salt
+                }
             }
+            return true
+        }catch (_ : Exception){
+            return false
         }
+    }
+
+    override suspend fun userExists(username: String): Boolean {
+        val userExists = transaction {
+            UserTable
+                .selectAll()
+                .where { UserTable.username eq username}
+                .firstOrNull()
+        }
+        return userExists != null
     }
 }

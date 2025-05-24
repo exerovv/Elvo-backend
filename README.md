@@ -21,7 +21,7 @@ Here's a list of features included in this project:
 | [Exposed](https://start.ktor.io/p/exposed)                             | Adds Exposed database to your application                                          |
 | [Postgres](https://start.ktor.io/p/postgres)                           | Adds Postgres database to your application                                         |
 | [Authentication](https://start.ktor.io/p/auth)                         | Provides extension point for handling the Authorization header                     |
-| [Authentication JWT](https://start.ktor.io/p/auth-jwt)                 | Handles JSON Web Token (JWT) bearer authentication scheme                          |
+| [Authentication JWT](https://start.ktor.io/p/auth-jwt)                 | Handles JSON Web Token (JWT) bearer security scheme                          |
 
 ## Building & Running
 

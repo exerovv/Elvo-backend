@@ -2,22 +2,23 @@ package com.example.authentication
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import com.example.security.token.TokenConfig
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 import io.ktor.server.response.respondText
-import java.util.Date
 
-fun Application.configureSecurity(config : JWTConfig) {
+fun Application.configureSecurity(tokenConfig: TokenConfig) {
     install(Authentication){
         jwt("jwt-auth"){
-            realm = config.realm
+            realm = this@configureSecurity.environment.config.property("jwt.realm").getString()
             val jwtVerifier = JWT
-                .require(Algorithm.HMAC256(config.secret))
-                .withAudience(config.audience)
-                .withIssuer(config.issuer)
+                .require(Algorithm.HMAC256(tokenConfig.secret))
+                .withAudience(tokenConfig.audience)
+                .withIssuer(tokenConfig.issuer)
                 .build()
+
             verifier(jwtVerifier)
 
             validate { jwtCredential ->
@@ -36,20 +37,3 @@ fun Application.configureSecurity(config : JWTConfig) {
         }
     }
 }
-
-fun generateToken(config: JWTConfig, username : String): String{
-    return JWT.create()
-        .withAudience(config.audience)
-        .withIssuer(config.issuer)
-        .withClaim("username", username)
-        .withExpiresAt(Date(System.currentTimeMillis() + config.tokenExpiry))
-        .sign(Algorithm.HMAC256(config.secret))
-}
-
-data class JWTConfig(
-    val realm : String,
-    val secret : String,
-    val issuer : String,
-    val audience : String,
-    val tokenExpiry : Long,
-)
