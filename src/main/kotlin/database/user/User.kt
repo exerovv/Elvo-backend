@@ -1,7 +1,7 @@
-package com.example.database.models
+package com.example.database.user
 
 data class User (
+    val userId: Int,
     val username: String,
     val password: String,
-    val salt: String
     )

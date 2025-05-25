@@ -1,8 +1,7 @@
-package com.example.database.models
+package com.example.database.user
 
 interface UserDataSource {
-    suspend fun getUserByUsername(username: String): User?
+    suspend fun getUserById(id: Int): User?
     suspend fun insertUser(user: User) : Boolean
-    suspend fun userExists(username: String) : Boolean
-
+    suspend fun userExists(id: Int) : Boolean
 }

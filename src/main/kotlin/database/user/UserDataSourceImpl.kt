@@ -1,23 +1,21 @@
 package com.example.database.user
 
-import com.example.database.models.User
-import com.example.database.models.UserDataSource
-import com.example.database.models.UserTable
+
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 
 class UserDataSourceImpl : UserDataSource {
-    override suspend fun getUserByUsername(username: String): User? {
+    override suspend fun getUserById(id: Int): User? {
         return transaction {
             UserTable
                 .selectAll()
-                .where { UserTable.username eq username }
+                .where { UserTable.userId eq id }
                 .map {
                     User(
+                        userId = it[UserTable.userId],
                         username = it[UserTable.username],
                         password = it[UserTable.password],
-                        salt = it[UserTable.salt]
                     )
                 }
                 .firstOrNull()
@@ -28,9 +26,10 @@ class UserDataSourceImpl : UserDataSource {
         try{
             transaction {
                 UserTable.insert {
+                    it[userId] = user.userId
                     it[username] = user.username
                     it[password] = user.password
-                    it[salt] = user.salt
+
                 }
             }
             return true
@@ -39,11 +38,11 @@ class UserDataSourceImpl : UserDataSource {
         }
     }
 
-    override suspend fun userExists(username: String): Boolean {
+    override suspend fun userExists(id: Int): Boolean {
         val userExists = transaction {
             UserTable
                 .selectAll()
-                .where { UserTable.username eq username}
+                .where { UserTable.userId eq id}
                 .firstOrNull()
         }
         return userExists != null

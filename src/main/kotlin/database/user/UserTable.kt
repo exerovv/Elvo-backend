@@ -1,11 +1,11 @@
-package com.example.database.models
+package com.example.database.user
 
 import org.jetbrains.exposed.sql.Table
 
 object UserTable: Table("users") {
+    val userId = integer("userId").autoIncrement()
     val username = varchar("username", 30)
-    val password= varchar("password", 50)
-    val salt= varchar("salt", 25)
+    val password= varchar("password", 100)
 
-    override val primaryKey: PrimaryKey = PrimaryKey(username)
+    override val primaryKey: PrimaryKey = PrimaryKey(userId)
 }
