@@ -3,7 +3,6 @@ val h2_version: String by project
 val kotlin_version: String by project
 val logback_version: String by project
 val postgres_version: String by project
-val commons_codec_version : String by project
 
 plugins {
     kotlin("jvm") version "2.1.10"
@@ -39,5 +38,5 @@ dependencies {
     implementation("io.ktor:ktor-server-config-yaml")
     testImplementation("io.ktor:ktor-server-test-host")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
-    implementation("commons-codec:commons-codec:${commons_codec_version}")
+    implementation("de.mkammerer:argon2-jvm:2.11")
 }

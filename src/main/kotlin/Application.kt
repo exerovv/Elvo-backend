@@ -3,9 +3,10 @@ package com.example
 import com.example.authentication.configureSecurity
 import com.example.database.configureDatabases
 import com.example.database.user.UserDataSourceImpl
-import com.example.security.hashing.SHA256HashingService
+import com.example.security.hashing.ArgonHashingService
 import com.example.security.token.JwtTokenService
 import com.example.security.token.TokenConfig
+import de.mkammerer.argon2.Argon2Factory
 import io.ktor.server.application.*
 
 fun main(args: Array<String>) {
@@ -21,7 +22,8 @@ fun Application.module() {
         expiresIn = jwt.property("expiry").getString().toLong(),
         secret = jwt.property("secret").getString(),
     )
-    val hashingService = SHA256HashingService()
+    val argon2 = Argon2Factory.create()
+    val hashingService = ArgonHashingService(argon2)
     val userDataSource = UserDataSourceImpl()
     configureSerialization()
     configureDatabases()

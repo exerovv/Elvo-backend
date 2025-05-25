@@ -1,6 +1,6 @@
 package com.example
 
-import com.example.database.models.UserDataSource
+import com.example.database.user.UserDataSource
 import com.example.security.hashing.HashingService
 import com.example.security.routing.authRouting
 import com.example.security.token.TokenConfig

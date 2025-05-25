@@ -5,10 +5,12 @@ ktor:
   deployment:
     port: 8080
   jwt:
-    secret: $jwt-secret
+    secret: $JWT_SECRET
     issuer: "http://localhost:8080"
     audience: "http://localhost:8080"
     realm: "Access protected routes"
     expiry: "86400000"
 postgres:
-  url: "jdbc:postgresql://localhost/default"
+  url: $POSTGRES_URL
+  user: $POSTGRES_USER
+  password: $POSTGRES_PASSWORD

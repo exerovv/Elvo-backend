@@ -1,10 +1,8 @@
 package com.example.security.routing
 
-import com.example.authentication.model.AuthRequest
-import com.example.database.models.User
-import com.example.database.models.UserDataSource
+import com.example.security.request.AuthRequest
+import com.example.database.user.*
 import com.example.security.hashing.HashingService
-import com.example.security.hashing.SaltedHash
 import com.example.security.response.AuthResponse
 import com.example.security.token.TokenClaim
 import com.example.security.token.TokenConfig
@@ -49,14 +47,13 @@ fun Application.authRouting(
                 call.respond(HttpStatusCode.Conflict, "User already exists")
                 return@post
             } else {
-                val saltedHash = hashingService.generateSaltedHash(requestData.password)
+                val hash = hashingService.generateSaltedHash(requestData.password)
                 val user = User(
                     username = requestData.username,
-                    password = saltedHash.hash,
-                    salt = saltedHash.salt
+                    password = hash
                 )
-                val wasAdded = userDataSource.insertUser(user)
-                if (!wasAdded) {
+                val userId = userDataSource.insertUser(user)
+                if (userId == null) {
                     call.respond(HttpStatusCode.Conflict, "Error on the server side")
                     return@post
                 }
@@ -65,6 +62,10 @@ fun Application.authRouting(
                     TokenClaim(
                         name = "username",
                         value = user.username
+                    ),
+                    TokenClaim(
+                        name = "user_id",
+                        value = userId
                     )
                 )
                 call.respond(
@@ -78,17 +79,14 @@ fun Application.authRouting(
                 call.respond(HttpStatusCode.BadRequest, "Incorrect credentials")
                 return@post
             }
-            val user = userDataSource.getUserByUsername(requestData.username)
-            if (user == null) {
+            val foundUser = userDataSource.getUserByUsername(requestData.username)
+            if (foundUser == null) {
                 call.respond(HttpStatusCode.Conflict, "User with this credentials doesnt exist")
                 return@post
             }
             val isValidPassword = hashingService.verify(
                 value = requestData.password,
-                saltedHash = SaltedHash(
-                    hash = user.password,
-                    salt = user.salt
-                )
+                hash =  foundUser.user.password
             )
 
             if (!isValidPassword) {
@@ -100,7 +98,7 @@ fun Application.authRouting(
                 config = tokenConfig,
                 TokenClaim(
                     name = "username",
-                    value = user.username
+                    value = foundUser.user.password
                 )
             )
 

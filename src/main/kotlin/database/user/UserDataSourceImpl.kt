@@ -1,48 +1,47 @@
 package com.example.database.user
 
 
-import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 
 class UserDataSourceImpl : UserDataSource {
-    override suspend fun getUserById(id: Int): User? {
+    override suspend fun getUserByUsername(username: String): UserDTO? {
         return transaction {
             UserTable
                 .selectAll()
-                .where { UserTable.userId eq id }
+                .where { UserTable.username eq username }
                 .map {
-                    User(
-                        userId = it[UserTable.userId],
-                        username = it[UserTable.username],
-                        password = it[UserTable.password],
+                    UserDTO(
+                        userId = it[UserTable.id].value,
+                        user = User(
+                            username = it[UserTable.username],
+                            password = it[UserTable.password],
+                        )
                     )
                 }
                 .firstOrNull()
         }
     }
 
-    override suspend fun insertUser(user: User) : Boolean {
-        try{
+    override suspend fun insertUser(user: User) : Int? {
+        return try{
             transaction {
-                UserTable.insert {
-                    it[userId] = user.userId
+                UserTable.insertAndGetId {
                     it[username] = user.username
                     it[password] = user.password
-
                 }
-            }
-            return true
+            }.value
         }catch (_ : Exception){
-            return false
+            null
         }
     }
 
-    override suspend fun userExists(id: Int): Boolean {
+    override suspend fun userExists(username: String): Boolean {
         val userExists = transaction {
             UserTable
                 .selectAll()
-                .where { UserTable.userId eq id}
+                .where { UserTable.username eq username}
                 .firstOrNull()
         }
         return userExists != null
