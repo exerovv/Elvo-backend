@@ -9,7 +9,7 @@ ktor:
     issuer: "http://localhost:8080"
     audience: "http://localhost:8080"
     realm: "Access protected routes"
-    expiry: "86400000"
+    expiry: "900000"
 postgres:
   url: $POSTGRES_URL
   user: $POSTGRES_USER

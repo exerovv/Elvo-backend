@@ -1,5 +1,7 @@
 package com.example.security.routing
 
+import com.example.database.token.Token
+import com.example.database.token.TokenDataSource
 import com.example.security.request.AuthRequest
 import com.example.database.user.*
 import com.example.security.hashing.HashingService
@@ -17,12 +19,15 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
+import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import java.util.UUID
 
 fun Application.authRouting(
     hashingService: HashingService,
     userDataSource: UserDataSource,
     tokenService: TokenService,
-    tokenConfig: TokenConfig
+    tokenConfig: TokenConfig,
+    tokenDataSource: TokenDataSource
 ) {
     routing {
         post("signup") {
@@ -52,12 +57,22 @@ fun Application.authRouting(
                     username = requestData.username,
                     password = hash
                 )
-                val userId = userDataSource.insertUser(user)
+
+                TODO("Изменить способ создания рефреш токена")
+                val refreshToken = UUID.randomUUID().toString()
+
+                val userId = newSuspendedTransaction {
+                    val userId = userDataSource.insertUser(user)
+                    userId?.let{
+                        tokenDataSource.insertToken(Token(userId, refreshToken, 900000, false))
+                    }
+                    userId
+                }
                 if (userId == null) {
                     call.respond(HttpStatusCode.Conflict, "Error on the server side")
                     return@post
                 }
-                val token = tokenService.generate(
+                val accessToken = tokenService.generate(
                     config = tokenConfig,
                     TokenClaim(
                         name = "username",
@@ -70,7 +85,7 @@ fun Application.authRouting(
                 )
                 call.respond(
                     status = HttpStatusCode.OK,
-                    message = AuthResponse(token)
+                    message = AuthResponse(accessToken)
                 )
             }
         }

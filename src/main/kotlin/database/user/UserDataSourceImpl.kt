@@ -3,11 +3,11 @@ package com.example.database.user
 
 import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.selectAll
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 
 class UserDataSourceImpl : UserDataSource {
     override suspend fun getUserByUsername(username: String): UserDTO? {
-        return transaction {
+        return newSuspendedTransaction {
             UserTable
                 .selectAll()
                 .where { UserTable.username eq username }
@@ -24,24 +24,24 @@ class UserDataSourceImpl : UserDataSource {
         }
     }
 
-    override suspend fun insertUser(user: User) : Int? {
-        return try{
-            transaction {
+    override suspend fun insertUser(user: User): Int? {
+        return try {
+            newSuspendedTransaction {
                 UserTable.insertAndGetId {
                     it[username] = user.username
                     it[password] = user.password
-                }
-            }.value
-        }catch (_ : Exception){
+                }.value
+            }
+        } catch (_: Exception) {
             null
         }
     }
 
     override suspend fun userExists(username: String): Boolean {
-        val userExists = transaction {
+        val userExists = newSuspendedTransaction {
             UserTable
                 .selectAll()
-                .where { UserTable.username eq username}
+                .where { UserTable.username eq username }
                 .firstOrNull()
         }
         return userExists != null
