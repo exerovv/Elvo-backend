@@ -1,5 +1,6 @@
 package com.example
 
+import com.example.database.token.TokenDataSource
 import com.example.database.user.UserDataSource
 import com.example.security.hashing.HashingService
 import com.example.security.routing.authRouting
@@ -11,7 +12,8 @@ fun Application.configureRouting(
     userDataSource: UserDataSource,
     hashingService: HashingService,
     tokenService: TokenService,
-    tokenConfig: TokenConfig
+    tokenConfig: TokenConfig,
+    tokenDataSource: TokenDataSource
 ) {
-    authRouting(hashingService, userDataSource, tokenService, tokenConfig)
+    authRouting(hashingService, userDataSource, tokenService, tokenConfig, tokenDataSource)
 }

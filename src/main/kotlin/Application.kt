@@ -2,6 +2,8 @@ package com.example
 
 import com.example.authentication.configureSecurity
 import com.example.database.configureDatabases
+import com.example.database.token.TokenDataSource
+import com.example.database.token.TokenDataSourceImpl
 import com.example.database.user.UserDataSourceImpl
 import com.example.security.hashing.ArgonHashingService
 import com.example.security.token.JwtTokenService
@@ -25,8 +27,9 @@ fun Application.module() {
     val argon2 = Argon2Factory.create()
     val hashingService = ArgonHashingService(argon2)
     val userDataSource = UserDataSourceImpl()
+    val tokenDataSource = TokenDataSourceImpl()
     configureSerialization()
     configureDatabases()
     configureSecurity(tokenConfig)
-    configureRouting(userDataSource, hashingService, tokenService, tokenConfig)
+    configureRouting(userDataSource, hashingService, tokenService, tokenConfig, tokenDataSource)
 }

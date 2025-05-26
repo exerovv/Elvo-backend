@@ -12,7 +12,7 @@ import io.ktor.server.response.respondText
 fun Application.configureSecurity(tokenConfig: TokenConfig) {
     install(Authentication){
         jwt("jwt-auth"){
-            realm = this@configureSecurity.environment.config.property("jwt.realm").getString()
+            realm = this@configureSecurity.environment.config.property("ktor.jwt.realm").getString()
             val jwtVerifier = JWT
                 .require(Algorithm.HMAC256(tokenConfig.secret))
                 .withAudience(tokenConfig.audience)

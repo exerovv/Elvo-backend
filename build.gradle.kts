@@ -39,4 +39,5 @@ dependencies {
     testImplementation("io.ktor:ktor-server-test-host")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
     implementation("de.mkammerer:argon2-jvm:2.11")
+    implementation("com.zaxxer:HikariCP:6.3.0")
 }
