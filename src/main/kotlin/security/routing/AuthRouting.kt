@@ -5,10 +5,15 @@ import com.example.database.token.TokenDataSource
 import com.example.security.request.AuthRequest
 import com.example.database.user.*
 import com.example.security.hashing.HashingService
+import com.example.security.request.RefreshRequest
+import com.example.security.response.ApiResponse
 import com.example.security.response.AuthResponse
 import com.example.security.token.TokenClaim
-import com.example.security.token.TokenConfig
-import com.example.security.token.TokenService
+import com.example.security.token.JWTTokenConfig
+import com.example.security.token.JwtTokenService
+import com.example.security.token.RefreshTokenConfig
+import com.example.security.token.RefreshTokenService
+import com.example.security.utils.ErrorCode
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.auth.authenticate
@@ -19,122 +24,282 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
+import kotlinx.datetime.Clock
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
-import java.util.UUID
+import kotlin.time.Duration.Companion.milliseconds
 
 fun Application.authRouting(
     hashingService: HashingService,
     userDataSource: UserDataSource,
-    tokenService: TokenService,
-    tokenConfig: TokenConfig,
+    jwtTokenService: JwtTokenService,
+    jwtTokenConfig: JWTTokenConfig,
+    refreshTokenConfig: RefreshTokenConfig,
+    refreshTokenService: RefreshTokenService,
     tokenDataSource: TokenDataSource
 ) {
-//    routing {
-//        post("signup") {
-//            val requestData = call.receiveOrNull<AuthRequest>() ?: run {
-//                call.respond(HttpStatusCode.BadRequest, "Incorrect credentials")
-//                return@post
-//            }
-//
-//            val areFieldsBlank = requestData.username.isBlank() || requestData.password.isBlank()
-//            val isPwdTooShort = requestData.password.length < 8
-//            val userExists = userDataSource.userExists(requestData.username)
-//            if (areFieldsBlank) {
-//                call.respond(HttpStatusCode.Conflict, "Credentials cant be blank")
-//                return@post
-//            }
-//            if (isPwdTooShort) {
-//                call.respond(HttpStatusCode.Conflict, "Password is too short")
-//                return@post
-//
-//            }
-//            if (userExists) {
-//                call.respond(HttpStatusCode.Conflict, "User already exists")
-//                return@post
-//            } else {
-//                val hash = hashingService.generateSaltedHash(requestData.password)
-//                val user = User(
-//                    username = requestData.username,
-//                    password = hash
-//                )
-//
-//                TODO("Изменить способ создания рефреш токена")
-//                val refreshToken = UUID.randomUUID().toString()
-//
-//                val userId = newSuspendedTransaction {
-//                    val userId = userDataSource.insertUser(user)
-//                    userId?.let{
-//                        tokenDataSource.insertToken(Token(userId, refreshToken, 900000, false))
-//                    }
-//                    userId
-//                }
-//                if (userId == null) {
-//                    call.respond(HttpStatusCode.Conflict, "Error on the server side")
-//                    return@post
-//                }
-//                val accessToken = tokenService.generate(
-//                    config = tokenConfig,
-//                    TokenClaim(
-//                        name = "username",
-//                        value = user.username
-//                    ),
-//                    TokenClaim(
-//                        name = "user_id",
-//                        value = userId
-//                    )
-//                )
-//                call.respond(
-//                    status = HttpStatusCode.OK,
-//                    message = AuthResponse(accessToken)
-//                )
-//            }
-//        }
-//        post("signin") {
-//            val requestData = call.receiveOrNull<AuthRequest>() ?: run {
-//                call.respond(HttpStatusCode.BadRequest, "Incorrect credentials")
-//                return@post
-//            }
-//            val foundUser = userDataSource.getUserByUsername(requestData.username)
-//            if (foundUser == null) {
-//                call.respond(HttpStatusCode.Conflict, "User with this credentials doesnt exist")
-//                return@post
-//            }
-//            val isValidPassword = hashingService.verify(
-//                value = requestData.password,
-//                hash =  foundUser.user.password
-//            )
-//
-//            if (!isValidPassword) {
-//                call.respond(HttpStatusCode.BadRequest, "Incorrect credentials")
-//                return@post
-//            }
-//
-//            val token = tokenService.generate(
-//                config = tokenConfig,
-//                TokenClaim(
-//                    name = "username",
-//                    value = foundUser.user.password
-//                )
-//            )
-//
-//            call.respond(
-//                status = HttpStatusCode.OK,
-//                message = AuthResponse(token)
-//            )
-//        }
-//
-//        authenticate("jwt-auth") {
-//            get("authenticate") {
-//                call.respond(HttpStatusCode.OK)
-//            }
-//        }
-//
-//        authenticate {
-//            get("secret"){
-//                val principal = call.principal<JWTPrincipal>()
-//                val username = principal?.getClaim("username", String::class)
-//                call.respond(HttpStatusCode.OK, "Your username is $username")
-//            }
-//        }
-//    }
+    routing {
+        post("signup") {
+            val requestData = call.receiveOrNull<AuthRequest>() ?: run {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    ApiResponse<Unit>(
+                        false,
+                        ErrorCode.INCORRECT_CREDENTIALS
+                    )
+                )
+                return@post
+            }
+
+            val areFieldsBlank = requestData.username.isBlank() || requestData.password.isBlank()
+            val isPwdTooShort = requestData.password.length < 8
+            val userExists = userDataSource.userExists(requestData.username)
+            if (areFieldsBlank) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    ApiResponse<Unit>(
+                        false,
+                        ErrorCode.BLANK_CREDENTIALS
+                    )
+                )
+                return@post
+            }
+            if (isPwdTooShort) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    ApiResponse<Unit>(
+                        false,
+                        ErrorCode.SHORT_PASSWORD
+                    )
+                )
+                return@post
+
+            }
+            if (userExists) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    ApiResponse<Unit>(
+                        false,
+                        ErrorCode.USER_ALREADY_EXISTS
+                    )
+                )
+                return@post
+            } else {
+                val hash = hashingService.generateHash(requestData.password)
+                val user = User(
+                    username = requestData.username,
+                    password = hash
+                )
+
+                val refreshToken = refreshTokenService.generate(refreshTokenConfig)
+
+                val userId = newSuspendedTransaction {
+                    val userId = userDataSource.insertUser(user)
+                    userId?.let {
+                        tokenDataSource.insertToken(
+                            Token(
+                                userId,
+                                refreshToken,
+                                Clock.System.now(),
+                                Clock.System.now().plus(refreshTokenConfig.expiresIn.milliseconds),
+                                false
+                            )
+                        )
+                    }
+                    userId
+                }
+                if (userId == null) {
+                    call.respond(
+                        HttpStatusCode.Conflict,
+                        ApiResponse<Unit>(
+                            false,
+                            ErrorCode.SERVER_ERROR
+                        )
+                    )
+                    return@post
+                }
+
+                val accessToken = jwtTokenService.generate(
+                    config = jwtTokenConfig,
+                    TokenClaim(
+                        name = "user_id",
+                        value = userId
+                    )
+                )
+                call.respond(
+                    status = HttpStatusCode.OK,
+                    message = ApiResponse(
+                        success = true,
+                        data = AuthResponse(accessToken, refreshToken)
+                    )
+                )
+            }
+        }
+        post("signin") {
+            val requestData = call.receiveOrNull<AuthRequest>() ?: run {
+                call.respond(
+                    HttpStatusCode.BadRequest, ApiResponse<Unit>(
+                        false,
+                        ErrorCode.INCORRECT_CREDENTIALS
+                    )
+                )
+                return@post
+            }
+            val foundUser = userDataSource.getUserByUsername(requestData.username)
+            if (foundUser == null) {
+                call.respond(
+                    HttpStatusCode.Unauthorized,
+                    ApiResponse<Unit>(
+                        false,
+                        ErrorCode.USER_NOT_FOUND
+                    )
+                )
+                return@post
+
+            }
+
+            val isValidPassword = hashingService.verify(
+                value = requestData.password,
+                hash = foundUser.user.password
+            )
+
+            if (!isValidPassword) {
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    ApiResponse<Unit>(
+                        false,
+                        ErrorCode.INCORRECT_CREDENTIALS
+                    )
+                )
+                return@post
+            }
+
+            val accessToken = jwtTokenService.generate(
+                config = jwtTokenConfig,
+                TokenClaim(
+                    name = "user_id",
+                    value = foundUser.userId
+                )
+            )
+
+            val refreshToken = refreshTokenService.generate(refreshTokenConfig)
+
+            val updatedRows = newSuspendedTransaction {
+                tokenDataSource.updateToken(
+                    Token(
+                        foundUser.userId,
+                        refreshToken,
+                        Clock.System.now(),
+                        Clock.System.now().plus(refreshTokenConfig.expiresIn.milliseconds),
+                        false
+                    )
+                )
+            }
+
+            if (updatedRows < 1) {
+                call.respond(
+                    HttpStatusCode.Conflict,
+                    ApiResponse<Unit>(
+                        false,
+                        ErrorCode.SERVER_ERROR
+                    )
+                )
+                return@post
+            }
+
+            call.respond(
+                status = HttpStatusCode.OK,
+                message = ApiResponse(
+                    success = true,
+                    data = AuthResponse(accessToken, refreshToken)
+                )
+            )
+        }
+
+        post("refresh") {
+            val requestData = call.receiveOrNull<RefreshRequest>() ?: run {
+                call.respond(
+                    HttpStatusCode.BadRequest, ApiResponse<Unit>(
+                        false,
+                        ErrorCode.INCORRECT_CREDENTIALS
+                    )
+                )
+                return@post
+            }
+
+            if (requestData.refreshToken.isBlank()) {
+                call.respond(
+                    HttpStatusCode.BadRequest, ApiResponse<Unit>(
+                        false,
+                        ErrorCode.BLANK_CREDENTIALS
+                    )
+                )
+                return@post
+            }
+
+            val foundToken = tokenDataSource.findToken(requestData.refreshToken)
+
+            if (foundToken == null || foundToken.expiresAt > Clock.System.now()) {
+                call.respond(
+                    HttpStatusCode.Unauthorized, ApiResponse<Unit>(
+                        false,
+                        ErrorCode.SESSION_EXPIRED
+                    )
+                )
+                return@post
+            } else {
+                val newAccessToken = jwtTokenService.generate(
+                    config = jwtTokenConfig,
+                    TokenClaim(
+                        name = "user_id",
+                        value = foundToken.userId
+                    )
+                )
+
+                val refreshToken = refreshTokenService.generate(refreshTokenConfig)
+
+                val updatedRows = tokenDataSource.updateToken(
+                    Token(
+                        foundToken.userId,
+                        refreshToken,
+                        Clock.System.now(),
+                        Clock.System.now().plus(refreshTokenConfig.expiresIn.milliseconds),
+                        false
+                    )
+                )
+                if (updatedRows < 1) {
+                    call.respond(
+                        HttpStatusCode.Conflict,
+                        ApiResponse<Unit>(
+                            false,
+                            ErrorCode.SERVER_ERROR
+                        )
+                    )
+                    return@post
+                }
+                call.respond(
+                    status = HttpStatusCode.OK,
+                    message = ApiResponse(
+                        success = true,
+                        data = AuthResponse(newAccessToken, foundToken.refreshToken)
+                    )
+                )
+            }
+
+
+        }
+
+        authenticate("jwt-auth") {
+            get("authenticate") {
+                call.respond(HttpStatusCode.OK)
+            }
+        }
+
+        authenticate {
+            get("secret") {
+                val principal = call.principal<JWTPrincipal>()
+                val username = principal?.getClaim("username", String::class)
+                call.respond(HttpStatusCode.OK, "Your username is $username")
+            }
+        }
+    }
 }

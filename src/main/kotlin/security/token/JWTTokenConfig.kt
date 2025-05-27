@@ -1,8 +1,8 @@
 package com.example.security.token
 
-data class TokenConfig(
+data class JWTTokenConfig(
     val issuer : String,
     val audience : String,
-    val expiresIn : Long,
+    override val expiresIn : Long,
     val secret : String
-)
+) : BaseTokenConfig

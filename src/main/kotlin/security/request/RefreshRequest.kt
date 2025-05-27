@@ -1,12 +1,10 @@
-package com.example.security.response
+package com.example.security.request
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class AuthResponse(
-    @SerialName("access_token")
-    val accessToken: String,
+data class RefreshRequest(
     @SerialName("refresh_token")
     val refreshToken: String
 )

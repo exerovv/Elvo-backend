@@ -6,11 +6,11 @@ import java.util.Date
 
 class JwtTokenService: TokenService {
     override fun generate(
-        config: TokenConfig,
+        config: BaseTokenConfig,
         vararg claims: TokenClaim
     ): String {
         var token = JWT.create()
-            .withAudience(config.audience)
+            .withAudience((config as JWTTokenConfig).audience)
             .withIssuer(config.issuer)
             .withExpiresAt(Date(System.currentTimeMillis() + config.expiresIn))
         claims.forEach { claim ->

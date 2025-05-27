@@ -40,4 +40,5 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
     implementation("de.mkammerer:argon2-jvm:2.11")
     implementation("com.zaxxer:HikariCP:6.3.0")
+    implementation("at.favre.lib:bcrypt:0.10.2")
 }

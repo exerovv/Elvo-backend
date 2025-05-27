@@ -2,21 +2,21 @@ package com.example.authentication
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
-import com.example.security.token.TokenConfig
+import com.example.security.token.JWTTokenConfig
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
 import io.ktor.server.response.respondText
 
-fun Application.configureSecurity(tokenConfig: TokenConfig) {
+fun Application.configureSecurity(jwtTokenConfig: JWTTokenConfig) {
     install(Authentication){
         jwt("jwt-auth"){
             realm = this@configureSecurity.environment.config.property("ktor.jwt.realm").getString()
             val jwtVerifier = JWT
-                .require(Algorithm.HMAC256(tokenConfig.secret))
-                .withAudience(tokenConfig.audience)
-                .withIssuer(tokenConfig.issuer)
+                .require(Algorithm.HMAC256(jwtTokenConfig.secret))
+                .withAudience(jwtTokenConfig.audience)
+                .withIssuer(jwtTokenConfig.issuer)
                 .build()
 
             verifier(jwtVerifier)

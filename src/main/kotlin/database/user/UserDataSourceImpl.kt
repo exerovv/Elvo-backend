@@ -5,7 +5,7 @@ import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 
-class UserDataSourceImpl : UserDataSource {
+class UserDataSourceImpl: UserDataSource {
     override suspend fun getUserByUsername(username: String): UserDTO? {
         return newSuspendedTransaction {
             UserTable
