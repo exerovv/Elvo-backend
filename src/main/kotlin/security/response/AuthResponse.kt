@@ -1,12 +1,9 @@
 package com.example.security.response
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import com.example.security.utils.ErrorCode
 
-@Serializable
-data class AuthResponse(
-    @SerialName("access_token")
-    val accessToken: String,
-    @SerialName("refresh_token")
-    val refreshToken: String
+data class AuthResponse<T>(
+    val success: Boolean,
+    val errorCode: ErrorCode? = null,
+    val data: T? = null
 )

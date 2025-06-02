@@ -3,7 +3,7 @@ package com.example.security.hashing
 import de.mkammerer.argon2.Argon2
 
 class ArgonHashingService(val argon2: Argon2): HashingService {
-    override fun generateSaltedHash(
+    override fun generateHash(
         value: String
     ): String {
         return argon2.hash(3, 65536, 1, value.toCharArray())
