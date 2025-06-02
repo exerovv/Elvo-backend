@@ -6,8 +6,8 @@ import com.example.security.request.AuthRequest
 import com.example.database.user.*
 import com.example.security.hashing.HashingService
 import com.example.security.request.RefreshRequest
-import com.example.security.response.ApiResponse
 import com.example.security.response.AuthResponse
+import com.example.security.response.TokenResponse
 import com.example.security.token.TokenClaim
 import com.example.security.token.JWTTokenConfig
 import com.example.security.token.JwtTokenService
@@ -42,7 +42,7 @@ fun Application.authRouting(
             val requestData = call.receiveOrNull<AuthRequest>() ?: run {
                 call.respond(
                     HttpStatusCode.BadRequest,
-                    ApiResponse<Unit>(
+                    AuthResponse<Unit>(
                         false,
                         ErrorCode.INCORRECT_CREDENTIALS
                     )
@@ -56,7 +56,7 @@ fun Application.authRouting(
             if (areFieldsBlank) {
                 call.respond(
                     HttpStatusCode.BadRequest,
-                    ApiResponse<Unit>(
+                    AuthResponse<Unit>(
                         false,
                         ErrorCode.BLANK_CREDENTIALS
                     )
@@ -66,18 +66,17 @@ fun Application.authRouting(
             if (isPwdTooShort) {
                 call.respond(
                     HttpStatusCode.BadRequest,
-                    ApiResponse<Unit>(
+                    AuthResponse<Unit>(
                         false,
                         ErrorCode.SHORT_PASSWORD
                     )
                 )
                 return@post
-
             }
             if (userExists) {
                 call.respond(
                     HttpStatusCode.BadRequest,
-                    ApiResponse<Unit>(
+                    AuthResponse<Unit>(
                         false,
                         ErrorCode.USER_ALREADY_EXISTS
                     )
@@ -110,7 +109,7 @@ fun Application.authRouting(
                 if (userId == null) {
                     call.respond(
                         HttpStatusCode.Conflict,
-                        ApiResponse<Unit>(
+                        AuthResponse<Unit>(
                             false,
                             ErrorCode.SERVER_ERROR
                         )
@@ -127,9 +126,9 @@ fun Application.authRouting(
                 )
                 call.respond(
                     status = HttpStatusCode.OK,
-                    message = ApiResponse(
+                    message = AuthResponse(
                         success = true,
-                        data = AuthResponse(accessToken, refreshToken)
+                        data = TokenResponse(accessToken, refreshToken)
                     )
                 )
             }
@@ -137,7 +136,7 @@ fun Application.authRouting(
         post("signin") {
             val requestData = call.receiveOrNull<AuthRequest>() ?: run {
                 call.respond(
-                    HttpStatusCode.BadRequest, ApiResponse<Unit>(
+                    HttpStatusCode.BadRequest, AuthResponse<Unit>(
                         false,
                         ErrorCode.INCORRECT_CREDENTIALS
                     )
@@ -148,7 +147,7 @@ fun Application.authRouting(
             if (foundUser == null) {
                 call.respond(
                     HttpStatusCode.Unauthorized,
-                    ApiResponse<Unit>(
+                    AuthResponse<Unit>(
                         false,
                         ErrorCode.USER_NOT_FOUND
                     )
@@ -165,7 +164,7 @@ fun Application.authRouting(
             if (!isValidPassword) {
                 call.respond(
                     HttpStatusCode.BadRequest,
-                    ApiResponse<Unit>(
+                    AuthResponse<Unit>(
                         false,
                         ErrorCode.INCORRECT_CREDENTIALS
                     )
@@ -198,7 +197,7 @@ fun Application.authRouting(
             if (updatedRows < 1) {
                 call.respond(
                     HttpStatusCode.Conflict,
-                    ApiResponse<Unit>(
+                    AuthResponse<Unit>(
                         false,
                         ErrorCode.SERVER_ERROR
                     )
@@ -208,9 +207,9 @@ fun Application.authRouting(
 
             call.respond(
                 status = HttpStatusCode.OK,
-                message = ApiResponse(
+                message = AuthResponse(
                     success = true,
-                    data = AuthResponse(accessToken, refreshToken)
+                    data = TokenResponse(accessToken, refreshToken)
                 )
             )
         }
@@ -218,7 +217,7 @@ fun Application.authRouting(
         post("refresh") {
             val requestData = call.receiveOrNull<RefreshRequest>() ?: run {
                 call.respond(
-                    HttpStatusCode.BadRequest, ApiResponse<Unit>(
+                    HttpStatusCode.BadRequest, AuthResponse<Unit>(
                         false,
                         ErrorCode.INCORRECT_CREDENTIALS
                     )
@@ -228,7 +227,7 @@ fun Application.authRouting(
 
             if (requestData.refreshToken.isBlank()) {
                 call.respond(
-                    HttpStatusCode.BadRequest, ApiResponse<Unit>(
+                    HttpStatusCode.BadRequest, AuthResponse<Unit>(
                         false,
                         ErrorCode.BLANK_CREDENTIALS
                     )
@@ -240,7 +239,7 @@ fun Application.authRouting(
 
             if (foundToken == null || foundToken.expiresAt > Clock.System.now()) {
                 call.respond(
-                    HttpStatusCode.Unauthorized, ApiResponse<Unit>(
+                    HttpStatusCode.Unauthorized, AuthResponse<Unit>(
                         false,
                         ErrorCode.SESSION_EXPIRED
                     )
@@ -269,7 +268,7 @@ fun Application.authRouting(
                 if (updatedRows < 1) {
                     call.respond(
                         HttpStatusCode.Conflict,
-                        ApiResponse<Unit>(
+                        AuthResponse<Unit>(
                             false,
                             ErrorCode.SERVER_ERROR
                         )
@@ -278,20 +277,14 @@ fun Application.authRouting(
                 }
                 call.respond(
                     status = HttpStatusCode.OK,
-                    message = ApiResponse(
+                    message = AuthResponse(
                         success = true,
-                        data = AuthResponse(newAccessToken, foundToken.refreshToken)
+                        data = TokenResponse(newAccessToken, foundToken.refreshToken)
                     )
                 )
             }
 
 
-        }
-
-        authenticate("jwt-auth") {
-            get("authenticate") {
-                call.respond(HttpStatusCode.OK)
-            }
         }
 
         authenticate {
