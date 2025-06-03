@@ -19,7 +19,7 @@ import io.ktor.server.application.Application
 import io.ktor.server.auth.authenticate
 import io.ktor.server.auth.jwt.JWTPrincipal
 import io.ktor.server.auth.principal
-import io.ktor.server.request.receiveOrNull
+import io.ktor.server.request.*
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
@@ -39,7 +39,7 @@ fun Application.authRouting(
 ) {
     routing {
         post("signup") {
-            val requestData = call.receiveOrNull<AuthRequest>() ?: run {
+            val requestData = kotlin.runCatching<AuthRequest?> { call.receiveNullable<AuthRequest>() }.getOrNull() ?: run {
                 call.respond(
                     HttpStatusCode.BadRequest,
                     AuthResponse<Unit>(
@@ -134,7 +134,7 @@ fun Application.authRouting(
             }
         }
         post("signin") {
-            val requestData = call.receiveOrNull<AuthRequest>() ?: run {
+            val requestData = kotlin.runCatching<AuthRequest?> { call.receiveNullable<AuthRequest>() }.getOrNull() ?: run {
                 call.respond(
                     HttpStatusCode.BadRequest, AuthResponse<Unit>(
                         false,
@@ -215,7 +215,7 @@ fun Application.authRouting(
         }
 
         post("refresh") {
-            val requestData = call.receiveOrNull<RefreshRequest>() ?: run {
+            val requestData = kotlin.runCatching<RefreshRequest?> { call.receiveNullable<RefreshRequest>() }.getOrNull() ?: run {
                 call.respond(
                     HttpStatusCode.BadRequest, AuthResponse<Unit>(
                         false,
@@ -287,7 +287,7 @@ fun Application.authRouting(
 
         }
 
-        authenticate {
+        authenticate("jwt-auth") {
             get("secret") {
                 val principal = call.principal<JWTPrincipal>()
                 val username = principal?.getClaim("username", String::class)
