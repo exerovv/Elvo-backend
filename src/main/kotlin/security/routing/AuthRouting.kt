@@ -6,7 +6,7 @@ import com.example.security.request.AuthRequest
 import com.example.database.user.*
 import com.example.security.hashing.HashingService
 import com.example.security.request.RefreshRequest
-import com.example.security.response.AuthResponse
+import com.example.security.response.ErrorResponse
 import com.example.security.response.TokenResponse
 import com.example.security.token.TokenClaim
 import com.example.security.token.JWTTokenConfig
@@ -42,9 +42,8 @@ fun Application.authRouting(
             val requestData = call.receiveOrNull<AuthRequest>() ?: run {
                 call.respond(
                     HttpStatusCode.BadRequest,
-                    AuthResponse<Unit>(
-                        false,
-                        ErrorCode.INCORRECT_CREDENTIALS
+                    ErrorResponse(
+                        errorCode = ErrorCode.INCORRECT_CREDENTIALS
                     )
                 )
                 return@post
@@ -56,9 +55,8 @@ fun Application.authRouting(
             if (areFieldsBlank) {
                 call.respond(
                     HttpStatusCode.BadRequest,
-                    AuthResponse<Unit>(
-                        false,
-                        ErrorCode.BLANK_CREDENTIALS
+                    ErrorResponse(
+                        errorCode = ErrorCode.BLANK_CREDENTIALS
                     )
                 )
                 return@post
@@ -66,9 +64,8 @@ fun Application.authRouting(
             if (isPwdTooShort) {
                 call.respond(
                     HttpStatusCode.BadRequest,
-                    AuthResponse<Unit>(
-                        false,
-                        ErrorCode.SHORT_PASSWORD
+                    ErrorResponse(
+                        errorCode = ErrorCode.SHORT_PASSWORD
                     )
                 )
                 return@post
@@ -76,9 +73,8 @@ fun Application.authRouting(
             if (userExists) {
                 call.respond(
                     HttpStatusCode.BadRequest,
-                    AuthResponse<Unit>(
-                        false,
-                        ErrorCode.USER_ALREADY_EXISTS
+                    ErrorResponse(
+                        errorCode = ErrorCode.USER_ALREADY_EXISTS
                     )
                 )
                 return@post
@@ -109,9 +105,8 @@ fun Application.authRouting(
                 if (userId == null) {
                     call.respond(
                         HttpStatusCode.Conflict,
-                        AuthResponse<Unit>(
-                            false,
-                            ErrorCode.SERVER_ERROR
+                        ErrorResponse(
+                            errorCode = ErrorCode.SERVER_ERROR
                         )
                     )
                     return@post
@@ -126,9 +121,9 @@ fun Application.authRouting(
                 )
                 call.respond(
                     status = HttpStatusCode.OK,
-                    message = AuthResponse(
-                        success = true,
-                        data = TokenResponse(accessToken, refreshToken)
+                    message = TokenResponse(
+                        accessToken = accessToken,
+                        refreshToken = refreshToken
                     )
                 )
             }
@@ -136,9 +131,8 @@ fun Application.authRouting(
         post("signin") {
             val requestData = call.receiveOrNull<AuthRequest>() ?: run {
                 call.respond(
-                    HttpStatusCode.BadRequest, AuthResponse<Unit>(
-                        false,
-                        ErrorCode.INCORRECT_CREDENTIALS
+                    HttpStatusCode.BadRequest, ErrorResponse(
+                        errorCode = ErrorCode.INCORRECT_CREDENTIALS
                     )
                 )
                 return@post
@@ -147,9 +141,8 @@ fun Application.authRouting(
             if (foundUser == null) {
                 call.respond(
                     HttpStatusCode.Unauthorized,
-                    AuthResponse<Unit>(
-                        false,
-                        ErrorCode.USER_NOT_FOUND
+                    ErrorResponse(
+                        errorCode = ErrorCode.USER_NOT_FOUND
                     )
                 )
                 return@post
@@ -164,9 +157,8 @@ fun Application.authRouting(
             if (!isValidPassword) {
                 call.respond(
                     HttpStatusCode.BadRequest,
-                    AuthResponse<Unit>(
-                        false,
-                        ErrorCode.INCORRECT_CREDENTIALS
+                    ErrorResponse(
+                        errorCode = ErrorCode.CHECK_CREDENTIALS
                     )
                 )
                 return@post
@@ -197,9 +189,8 @@ fun Application.authRouting(
             if (updatedRows < 1) {
                 call.respond(
                     HttpStatusCode.Conflict,
-                    AuthResponse<Unit>(
-                        false,
-                        ErrorCode.SERVER_ERROR
+                    ErrorResponse(
+                        errorCode = ErrorCode.SERVER_ERROR
                     )
                 )
                 return@post
@@ -207,9 +198,9 @@ fun Application.authRouting(
 
             call.respond(
                 status = HttpStatusCode.OK,
-                message = AuthResponse(
-                    success = true,
-                    data = TokenResponse(accessToken, refreshToken)
+                message = TokenResponse(
+                    accessToken = accessToken,
+                    refreshToken = refreshToken
                 )
             )
         }
@@ -217,9 +208,8 @@ fun Application.authRouting(
         post("refresh") {
             val requestData = call.receiveOrNull<RefreshRequest>() ?: run {
                 call.respond(
-                    HttpStatusCode.BadRequest, AuthResponse<Unit>(
-                        false,
-                        ErrorCode.INCORRECT_CREDENTIALS
+                    HttpStatusCode.BadRequest, ErrorResponse(
+                        errorCode = ErrorCode.INCORRECT_CREDENTIALS
                     )
                 )
                 return@post
@@ -227,9 +217,8 @@ fun Application.authRouting(
 
             if (requestData.refreshToken.isBlank()) {
                 call.respond(
-                    HttpStatusCode.BadRequest, AuthResponse<Unit>(
-                        false,
-                        ErrorCode.BLANK_CREDENTIALS
+                    HttpStatusCode.BadRequest, ErrorResponse(
+                        errorCode = ErrorCode.BLANK_CREDENTIALS
                     )
                 )
                 return@post
@@ -239,9 +228,8 @@ fun Application.authRouting(
 
             if (foundToken == null || foundToken.expiresAt > Clock.System.now()) {
                 call.respond(
-                    HttpStatusCode.Unauthorized, AuthResponse<Unit>(
-                        false,
-                        ErrorCode.SESSION_EXPIRED
+                    HttpStatusCode.Unauthorized, ErrorResponse(
+                        errorCode = ErrorCode.SESSION_EXPIRED
                     )
                 )
                 return@post
@@ -268,18 +256,17 @@ fun Application.authRouting(
                 if (updatedRows < 1) {
                     call.respond(
                         HttpStatusCode.Conflict,
-                        AuthResponse<Unit>(
-                            false,
-                            ErrorCode.SERVER_ERROR
+                        ErrorResponse(
+                            errorCode = ErrorCode.SERVER_ERROR
                         )
                     )
                     return@post
                 }
                 call.respond(
                     status = HttpStatusCode.OK,
-                    message = AuthResponse(
-                        success = true,
-                        data = TokenResponse(newAccessToken, foundToken.refreshToken)
+                    message = TokenResponse(
+                        accessToken = newAccessToken,
+                        refreshToken = refreshToken
                     )
                 )
             }
