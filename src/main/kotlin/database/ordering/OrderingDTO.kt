@@ -3,11 +3,13 @@ package com.example.database.ordering
 import kotlinx.datetime.LocalDateTime
 import java.math.BigDecimal
 
-data class Ordering(
+data class OrderingDTO(
+    val orderingId: Int,
     val userId: Int,
-    val status: Boolean,
+    val status: String,
     val formationDate: LocalDateTime,
     val weight: BigDecimal,
     val deliveryPrice: BigDecimal,
     val totalPrice: BigDecimal
 )
+

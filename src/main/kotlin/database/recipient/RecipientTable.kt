@@ -4,6 +4,7 @@ import com.example.database.user.UserTable
 import org.jetbrains.exposed.sql.Table
 
 object RecipientTable : Table("recipients") {
+
     val userId = integer("user_id").references(UserTable.id)
     val recipientId = integer("recipient_id").autoIncrement()
 
