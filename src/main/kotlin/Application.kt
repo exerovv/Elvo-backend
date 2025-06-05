@@ -2,6 +2,9 @@ package com.example
 
 import com.example.authentication.configureSecurity
 import com.example.database.configureDatabases
+import com.example.database.ordering.OrderingDataSourceImpl
+import com.example.database.popularitems.PopularItemsDataSourceImpl
+import com.example.database.recipient.RecipientDataSourceImpl
 import com.example.database.token.TokenDataSourceImpl
 import com.example.database.user.UserDataSourceImpl
 import com.example.security.hashing.BcryptHashingService
@@ -32,8 +35,21 @@ fun Application.module() {
     val hashingService = BcryptHashingService()
     val userDataSource = UserDataSourceImpl()
     val tokenDataSource = TokenDataSourceImpl()
+    val orderingDataSource = OrderingDataSourceImpl()
+    val popularItemsDataSource = PopularItemsDataSourceImpl()
+    val recipientDataSource = RecipientDataSourceImpl()
     configureSerialization()
     configureDatabases()
     configureSecurity(jwtTokenConfig)
-    configureRouting(userDataSource, hashingService, jwtTokenService, jwtTokenConfig,refreshTokenConfig, refreshTokenService, tokenDataSource)
+    configureRouting(
+        userDataSource,
+        hashingService,
+        jwtTokenService,
+        jwtTokenConfig,
+        refreshTokenConfig,
+        refreshTokenService,
+        tokenDataSource,
+        orderingDataSource,
+        popularItemsDataSource,
+        recipientDataSource)
 }

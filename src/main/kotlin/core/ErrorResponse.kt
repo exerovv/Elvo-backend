@@ -1,6 +1,6 @@
-package com.example.security.response
+package com.example.core
 
-import com.example.security.utils.ErrorCode
+import com.example.utils.ErrorCode
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

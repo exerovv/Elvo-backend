@@ -6,14 +6,14 @@ import com.example.security.request.AuthRequest
 import com.example.database.user.*
 import com.example.security.hashing.HashingService
 import com.example.security.request.RefreshRequest
-import com.example.security.response.ErrorResponse
+import com.example.core.ErrorResponse
 import com.example.security.response.TokenResponse
 import com.example.security.token.TokenClaim
 import com.example.security.token.JWTTokenConfig
 import com.example.security.token.JwtTokenService
 import com.example.security.token.RefreshTokenConfig
 import com.example.security.token.RefreshTokenService
-import com.example.security.utils.ErrorCode
+import com.example.utils.ErrorCode
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.auth.authenticate
@@ -39,7 +39,7 @@ fun Application.authRouting(
 ) {
     routing {
         post("signup") {
-            val requestData = kotlin.runCatching<AuthRequest?> { call.receiveNullable<AuthRequest>() }.getOrNull() ?: run {
+            val requestData = runCatching<AuthRequest?> { call.receiveNullable<AuthRequest>() }.getOrNull() ?: run {
                 call.respond(
                     HttpStatusCode.BadRequest,
                     ErrorResponse(
@@ -129,7 +129,7 @@ fun Application.authRouting(
             }
         }
         post("signin") {
-            val requestData = kotlin.runCatching<AuthRequest?> { call.receiveNullable<AuthRequest>() }.getOrNull() ?: run {
+            val requestData = runCatching<AuthRequest?> { call.receiveNullable<AuthRequest>() }.getOrNull() ?: run {
                 call.respond(
                     HttpStatusCode.BadRequest, ErrorResponse(
                         errorCode = ErrorCode.INCORRECT_CREDENTIALS
@@ -206,7 +206,7 @@ fun Application.authRouting(
         }
 
         post("refresh") {
-            val requestData = kotlin.runCatching<RefreshRequest?> { call.receiveNullable<RefreshRequest>() }.getOrNull() ?: run {
+            val requestData = runCatching<RefreshRequest?> { call.receiveNullable<RefreshRequest>() }.getOrNull() ?: run {
                 call.respond(
                     HttpStatusCode.BadRequest, ErrorResponse(
                         errorCode = ErrorCode.INCORRECT_CREDENTIALS

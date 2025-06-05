@@ -5,7 +5,7 @@ import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransacti
 
 
 class PopularItemsDataSourceImpl : PopularItemsDataSource {
-    override suspend fun getRandomPopularItems(): List<PopularItemDTO> = newSuspendedTransaction {
+    override suspend fun getPopularItems(): List<PopularItemDTO> = newSuspendedTransaction {
         PopularItemsTable
             .selectAll()
             .orderBy(Random())

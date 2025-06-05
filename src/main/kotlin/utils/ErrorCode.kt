@@ -1,4 +1,4 @@
-package com.example.security.utils
+package com.example.utils
 
 import kotlinx.serialization.Serializable
 
