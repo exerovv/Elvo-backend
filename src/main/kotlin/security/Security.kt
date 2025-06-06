@@ -22,8 +22,8 @@ fun Application.configureSecurity(jwtTokenConfig: JWTTokenConfig) {
             verifier(jwtVerifier)
 
             validate { jwtCredential ->
-                val username = jwtCredential.payload.getClaim("username").asString()
-                if (!username.isNullOrBlank()){
+                val userId = jwtCredential.payload.getClaim("user_id").asInt()
+                if (userId != null){
                     JWTPrincipal(jwtCredential.payload)
                 }else{
                     null
