@@ -4,11 +4,6 @@ data class RecipientDTO(
     val name: String,
     val surname: String,
     val patronymic: String?,
-    val city: String,
-    val street: String,
-    val house: Int,
-    val building: String?,
-    val flat: Int,
-    val floor: Int,
+    val addressId: Int,
     val phone: String
 )

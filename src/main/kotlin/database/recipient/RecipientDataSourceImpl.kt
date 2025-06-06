@@ -25,58 +25,45 @@ class RecipientDataSourceImpl : RecipientDataSource {
             .where((RecipientTable.userId eq userId) and (RecipientTable.id eq recipientId))
             .map {
                 RecipientDTO(
-                    userId = it[RecipientTable.userId],
                     name = it[RecipientTable.name],
-                    address = it[RecipientTable.address],
-                    phone = it[RecipientTable.phone]
+                    surname = it[RecipientTable.surname],
+                    patronymic = it[RecipientTable.patronymic],
+                    phone = it[RecipientTable.phone],
+                    addressId = it[RecipientTable.addressId],
                 )
             }
             .firstOrNull()
     }
 
-    override suspend fun insertRecipient(recipient: RecipientDTO): Int? {
-        return try {
-            newSuspendedTransaction {
-                RecipientTable.insertAndGetId {
-                    it[userId] = recipient.userId
-                    it[name] = recipient.name
-                    it[address] = recipient.address
-                    it[phone] = recipient.phone
-                }.value
-            }
-        } catch (_: Exception) {
-            null
-        }
+    override suspend fun insertRecipient(userId: Int, recipient: RecipientDTO): Int? = newSuspendedTransaction {
+        RecipientTable.insertAndGetId {
+            it[RecipientTable.userId] = userId
+            it[name] = recipient.name
+            it[addressId] = recipient.addressId
+            it[phone] = recipient.phone
+        }.value
     }
 
-
-    override suspend fun updateRecipient(userId: Int, recipientId: Int, recipient: RecipientDTO): Boolean {
-        return try {
-            newSuspendedTransaction {
-                RecipientTable.update({
-                    (RecipientTable.userId eq userId) and (RecipientTable.id eq recipientId)
-                }) {
-                    it[name] = recipient.name
-                    it[address] = recipient.address
-                    it[phone] = recipient.phone
-                } > 0
-            }
-        } catch (_: Exception) {
-            false
+    override suspend fun updateRecipient(userId: Int, recipientId: Int, recipient: RecipientDTO): Boolean =
+        newSuspendedTransaction {
+            RecipientTable.update({
+                (RecipientTable.userId eq userId) and (RecipientTable.id eq recipientId)
+            }) {
+                it[name] = recipient.name
+                it[surname] = recipient.surname
+                it[patronymic] = recipient.patronymic
+                it[addressId] = recipient.addressId
+                it[phone] = recipient.phone
+            } > 0
         }
-    }
 
-    override suspend fun deleteRecipient(userId: Int, recipientId: Int): Boolean {
-        return try {
-            newSuspendedTransaction {
-                RecipientTable.deleteWhere {
-                    (RecipientTable.userId eq userId) and (RecipientTable.recipientId eq recipientId)
-                } > 0
-            }
-        } catch (_: Exception) {
-            false
+    override suspend fun deleteRecipient(userId: Int, recipientId: Int): Boolean =
+        newSuspendedTransaction {
+            RecipientTable.deleteWhere {
+                (RecipientTable.userId eq userId) and (RecipientTable.id eq recipientId)
+            } > 0
         }
-    }
+
 
     override suspend fun checkRecipient(userId: Int, phone: String): Boolean = newSuspendedTransaction {
         val result = RecipientTable

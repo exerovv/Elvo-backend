@@ -1,5 +1,6 @@
 package com.example
 
+import com.example.database.address.AddressDataSource
 import com.example.database.ordering.OrderingDataSource
 import com.example.database.popularitems.PopularItemsDataSource
 import com.example.database.recipient.RecipientDataSource
@@ -24,8 +25,14 @@ fun Application.configureRouting(
     tokenDataSource: TokenDataSource,
     orderingDataSource: OrderingDataSource,
     popularItemsDataSource: PopularItemsDataSource,
-    recipientDataSource: RecipientDataSource
+    recipientDataSource: RecipientDataSource,
+    addressDataSource: AddressDataSource
 ) {
     authRouting(hashingService, userDataSource, jwtTokenService, jwtTokenConfig, refreshTokenConfig, refreshTokenService, tokenDataSource)
-    dbRouting(orderingDataSource = orderingDataSource, popularItemsDataSource = popularItemsDataSource, recipientDataSource = recipientDataSource)
+    dbRouting(
+        orderingDataSource = orderingDataSource,
+        popularItemsDataSource = popularItemsDataSource,
+        recipientDataSource = recipientDataSource,
+        addressDataSource = addressDataSource
+    )
 }

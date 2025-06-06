@@ -7,7 +7,7 @@ object AddressTable : IntIdTable("address") {
     val city = varchar("city", 20)
     val street = varchar("street", 20)
     val house = integer("house")
-    val building = integer("building")
+    val building = varchar("building", 5).nullable()
     val flat = integer("flat")
     val floor = integer("floor")
 }

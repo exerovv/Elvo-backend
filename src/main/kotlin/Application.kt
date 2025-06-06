@@ -1,6 +1,7 @@
 package com.example
 
 import com.example.authentication.configureSecurity
+import com.example.database.address.AddressDataSourceImpl
 import com.example.database.configureDatabases
 import com.example.database.ordering.OrderingDataSourceImpl
 import com.example.database.popularitems.PopularItemsDataSourceImpl
@@ -38,6 +39,7 @@ fun Application.module() {
     val orderingDataSource = OrderingDataSourceImpl()
     val popularItemsDataSource = PopularItemsDataSourceImpl()
     val recipientDataSource = RecipientDataSourceImpl()
+    val addressDataSource = AddressDataSourceImpl()
     configureSerialization()
     configureDatabases()
     configureSecurity(jwtTokenConfig)
@@ -51,5 +53,7 @@ fun Application.module() {
         tokenDataSource,
         orderingDataSource,
         popularItemsDataSource,
-        recipientDataSource)
+        recipientDataSource,
+        addressDataSource
+    )
 }
