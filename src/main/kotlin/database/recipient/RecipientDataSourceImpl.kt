@@ -39,6 +39,8 @@ class RecipientDataSourceImpl : RecipientDataSource {
         RecipientTable.insertAndGetId {
             it[RecipientTable.userId] = userId
             it[name] = recipient.name
+            it[surname] = recipient.surname
+            it[patronymic] = recipient.patronymic
             it[addressId] = recipient.addressId
             it[phone] = recipient.phone
         }.value
