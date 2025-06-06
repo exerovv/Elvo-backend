@@ -6,5 +6,5 @@ import io.ktor.server.auth.principal
 
 fun ApplicationCall.getUserIdClaim(): Int? {
     val principal = principal<JWTPrincipal>()
-    return principal?.getClaim("userId", Int::class)
+    return principal?.getClaim("user_id", Int::class)
 }
