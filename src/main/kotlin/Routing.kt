@@ -25,7 +25,6 @@ fun Application.configureRouting(
     orderingDataSource: OrderingDataSource,
     popularItemsDataSource: PopularItemsDataSource,
     recipientDataSource: RecipientDataSource
-
 ) {
     authRouting(hashingService, userDataSource, jwtTokenService, jwtTokenConfig, refreshTokenConfig, refreshTokenService, tokenDataSource)
     dbRouting(orderingDataSource = orderingDataSource, popularItemsDataSource = popularItemsDataSource, recipientDataSource = recipientDataSource)
