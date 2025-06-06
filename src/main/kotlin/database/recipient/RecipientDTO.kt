@@ -1,5 +1,8 @@
 package com.example.database.recipient
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class RecipientDTO(
     val name: String,
     val surname: String,

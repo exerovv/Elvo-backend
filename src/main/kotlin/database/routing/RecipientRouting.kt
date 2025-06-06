@@ -19,6 +19,7 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
+import java.lang.Exception
 import kotlin.text.toInt
 
 fun Route.recipientRouting(
@@ -97,9 +98,9 @@ fun Route.recipientRouting(
                 return@post
             }
 
-            val isSuccessful = newSuspendedTransaction {
-                val addressId = runCatching {
-                    addressDataSource.insertAddress(
+            try {
+                newSuspendedTransaction {
+                    val addressId = addressDataSource.insertAddress(
                         AddressDTO(
                             city = city,
                             street = street,
@@ -109,13 +110,7 @@ fun Route.recipientRouting(
                             floor = floor
                         )
                     )
-                }.getOrNull()
 
-                if (addressId == null) {
-                    return@newSuspendedTransaction false
-                }
-
-                val recipientInserted = runCatching {
                     recipientDataSource.insertRecipient(
                         userId = userId,
                         RecipientDTO(
@@ -126,12 +121,12 @@ fun Route.recipientRouting(
                             phone = phone
                         )
                     )
-                }.getOrNull() != null
 
-                recipientInserted
-            }
-
-            if (!isSuccessful) {
+                    call.respond(
+                        HttpStatusCode.OK
+                    )
+                }
+            } catch (_: Exception) {
                 call.respond(
                     HttpStatusCode.Conflict, ErrorResponse(
                         errorCode = ErrorCode.SERVER_ERROR
@@ -139,10 +134,6 @@ fun Route.recipientRouting(
                 )
                 return@post
             }
-
-            call.respond(
-                HttpStatusCode.OK
-            )
         }
 
         get("get") {
@@ -231,8 +222,19 @@ fun Route.recipientRouting(
                 return@put
             }
 
-            updateRequest.run{
-                if (!RecipientValidator.validateAllFields(name, surname, patronymic, phone, city, street, house, flat, floor)){
+            updateRequest.run {
+                if (!RecipientValidator.validateAllFields(
+                        name,
+                        surname,
+                        patronymic,
+                        phone,
+                        city,
+                        street,
+                        house,
+                        flat,
+                        floor
+                    )
+                ) {
                     call.respond(
                         HttpStatusCode.BadRequest, ErrorResponse(
                             errorCode = ErrorCode.INCORRECT_CREDENTIALS
@@ -245,7 +247,7 @@ fun Route.recipientRouting(
 
             val foundRecipient = recipientDataSource.getRecipientById(userid, recipientId)
 
-            if(foundRecipient == null){
+            if (foundRecipient == null) {
                 call.respond(
                     HttpStatusCode.Conflict, ErrorResponse(
                         errorCode = ErrorCode.RECIPIENT_NOT_FOUND
@@ -256,7 +258,7 @@ fun Route.recipientRouting(
 
             val foundAddress = addressDataSource.getAddressById(foundRecipient.addressId)
 
-            if (foundAddress == null){
+            if (foundAddress == null) {
                 call.respond(
                     HttpStatusCode.Conflict, ErrorResponse(
                         errorCode = ErrorCode.ADDRESS_NOT_FOUND
@@ -266,7 +268,7 @@ fun Route.recipientRouting(
             }
 
             updateRequest.name?.let {
-                require(RecipientValidator.validateNameFields(it)){
+                require(RecipientValidator.validateNameFields(it)) {
                     call.respond(
                         HttpStatusCode.Conflict, ErrorResponse(
                             errorCode = ErrorCode.INCORRECT_NAME
@@ -277,7 +279,7 @@ fun Route.recipientRouting(
             }
 
             updateRequest.surname?.let {
-                require(RecipientValidator.validateNameFields(it)){
+                require(RecipientValidator.validateNameFields(it)) {
                     call.respond(
                         HttpStatusCode.Conflict, ErrorResponse(
                             errorCode = ErrorCode.INCORRECT_NAME
@@ -288,7 +290,7 @@ fun Route.recipientRouting(
             }
 
             updateRequest.patronymic?.let {
-                require(RecipientValidator.validateNameFields(it)){
+                require(RecipientValidator.validateNameFields(it)) {
                     call.respond(
                         HttpStatusCode.Conflict, ErrorResponse(
                             errorCode = ErrorCode.INCORRECT_NAME
@@ -299,7 +301,7 @@ fun Route.recipientRouting(
             }
 
             updateRequest.phone?.let {
-                require(RecipientValidator.validatePhone(it)){
+                require(RecipientValidator.validatePhone(it)) {
                     call.respond(
                         HttpStatusCode.Conflict, ErrorResponse(
                             errorCode = ErrorCode.INCORRECT_PHONE
@@ -309,8 +311,8 @@ fun Route.recipientRouting(
                 }
             }
 
-            updateRequest.city?.let{
-                require(RecipientValidator.validateAddressFields(it)){
+            updateRequest.city?.let {
+                require(RecipientValidator.validateAddressFields(it)) {
                     call.respond(
                         HttpStatusCode.Conflict, ErrorResponse(
                             errorCode = ErrorCode.INCORRECT_ADDRESS
@@ -320,8 +322,8 @@ fun Route.recipientRouting(
                 }
             }
 
-            updateRequest.street?.let{
-                require(RecipientValidator.validateAddressFields(it)){
+            updateRequest.street?.let {
+                require(RecipientValidator.validateAddressFields(it)) {
                     call.respond(
                         HttpStatusCode.Conflict, ErrorResponse(
                             errorCode = ErrorCode.INCORRECT_ADDRESS
@@ -331,8 +333,8 @@ fun Route.recipientRouting(
                 }
             }
 
-            updateRequest.house?.let{
-                require(RecipientValidator.validateAddressFields(it)){
+            updateRequest.house?.let {
+                require(RecipientValidator.validateAddressFields(it)) {
                     call.respond(
                         HttpStatusCode.Conflict, ErrorResponse(
                             errorCode = ErrorCode.INCORRECT_ADDRESS
@@ -342,8 +344,8 @@ fun Route.recipientRouting(
                 }
             }
 
-            updateRequest.building?.let{
-                require(RecipientValidator.validateAddressFields(it)){
+            updateRequest.building?.let {
+                require(RecipientValidator.validateAddressFields(it)) {
                     call.respond(
                         HttpStatusCode.Conflict, ErrorResponse(
                             errorCode = ErrorCode.INCORRECT_ADDRESS
@@ -353,8 +355,8 @@ fun Route.recipientRouting(
                 }
             }
 
-            updateRequest.flat?.let{
-                require(RecipientValidator.validateAddressFields(it)){
+            updateRequest.flat?.let {
+                require(RecipientValidator.validateAddressFields(it)) {
                     call.respond(
                         HttpStatusCode.Conflict, ErrorResponse(
                             errorCode = ErrorCode.INCORRECT_ADDRESS
@@ -364,7 +366,7 @@ fun Route.recipientRouting(
                 }
             }
 
-            updateRequest.floor?.let{
+            updateRequest.floor?.let {
                 require(RecipientValidator.validateAddressFields(it)) {
                     call.respond(
                         HttpStatusCode.Conflict, ErrorResponse(
@@ -392,12 +394,12 @@ fun Route.recipientRouting(
             )
 
             var isSuccess = true
-            if(updatedRecipient != foundRecipient){
+            if (updatedRecipient != foundRecipient) {
                 isSuccess = recipientDataSource.updateRecipient(userid, recipientId, updatedRecipient)
             }
 
-            if(updatedAddress != foundAddress){
-                isSuccess = addressDataSource.updateAddress(updatedAddress)
+            if (updatedAddress != foundAddress) {
+                isSuccess = addressDataSource.updateAddress(foundRecipient.addressId, updatedAddress)
             }
 
             if (!isSuccess) {

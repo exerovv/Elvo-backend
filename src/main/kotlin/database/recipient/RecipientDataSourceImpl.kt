@@ -35,7 +35,7 @@ class RecipientDataSourceImpl : RecipientDataSource {
             .firstOrNull()
     }
 
-    override suspend fun insertRecipient(userId: Int, recipient: RecipientDTO): Int? = newSuspendedTransaction {
+    override suspend fun insertRecipient(userId: Int, recipient: RecipientDTO): Int = newSuspendedTransaction {
         RecipientTable.insertAndGetId {
             it[RecipientTable.userId] = userId
             it[name] = recipient.name

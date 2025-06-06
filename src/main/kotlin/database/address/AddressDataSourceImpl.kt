@@ -5,20 +5,15 @@ import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransacti
 
 class AddressDataSourceImpl : AddressDataSource {
 
-    override suspend fun insertAddress(address: AddressDTO): Int? = newSuspendedTransaction {
-        try{
-            AddressTable.insertAndGetId {
-                it[city] = address.city
-                it[street] = address.street
-                it[house] = address.house
-                it[building] = address.building
-                it[flat] = address.flat
-                it[floor] = address.floor
-            }.value
-        }catch(_: Exception){
-            null
-        }
-
+    override suspend fun insertAddress(address: AddressDTO): Int = newSuspendedTransaction {
+        AddressTable.insertAndGetId {
+            it[city] = address.city
+            it[street] = address.street
+            it[house] = address.house
+            it[building] = address.building
+            it[flat] = address.flat
+            it[floor] = address.floor
+        }.value
     }
 
     override suspend fun getAddressById(addressId: Int): AddressDTO? = newSuspendedTransaction {
@@ -38,22 +33,15 @@ class AddressDataSourceImpl : AddressDataSource {
             .singleOrNull()
     }
 
-    override suspend fun updateAddress(address: AddressDTO): Boolean {
-//        return try {
-//            newSuspendedTransaction {
-//                AddressTable.update({ AddressTable.id eq address.id }) {
-//                    it[city] = address.city
-//                    it[street] = address.street
-//                    it[house] = address.house
-//                    it[building] = address.building
-//                    it[flat] = address.flat
-//                    it[floor] = address.floor
-//                } > 0
-//            }
-//        } catch (_: Exception) {
-//            false
-//        }
-        return false
-    }
-
+    override suspend fun updateAddress(addressId: Int, address: AddressDTO): Boolean =
+        newSuspendedTransaction {
+            AddressTable.update({ AddressTable.id eq addressId }) {
+                it[city] = address.city
+                it[street] = address.street
+                it[house] = address.house
+                it[building] = address.building
+                it[flat] = address.flat
+                it[floor] = address.floor
+            } > 0
+        }
 }
