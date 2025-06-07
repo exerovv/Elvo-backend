@@ -203,6 +203,7 @@ fun Route.recipientRouting(
             val recipientId = call.parameters["id"]?.toInt()
 
             if (recipientId == null) {
+                println(1)
                 call.respond(
                     HttpStatusCode.BadRequest, ErrorResponse(
                         errorCode = ErrorCode.INCORRECT_CREDENTIALS
@@ -214,6 +215,7 @@ fun Route.recipientRouting(
             val updateRequest = call.receiveNullable<UpdateRecipientRequest>()
 
             if (updateRequest == null) {
+                println(2)
                 call.respond(
                     HttpStatusCode.BadRequest, ErrorResponse(
                         errorCode = ErrorCode.INCORRECT_CREDENTIALS

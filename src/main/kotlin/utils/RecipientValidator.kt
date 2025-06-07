@@ -46,7 +46,7 @@ object RecipientValidator {
         flat: Int?,
         floor: Int?
     ): Boolean {
-        return name == null &&
+        return !(name == null &&
                 surname == null &&
                 patronymic == null &&
                 phone == null &&
@@ -54,7 +54,7 @@ object RecipientValidator {
                 street == null &&
                 house == null &&
                 flat == null &&
-                floor == null
+                floor == null)
     }
 
     suspend fun <T> ApplicationCall.validateField(

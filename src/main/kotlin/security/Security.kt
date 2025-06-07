@@ -22,6 +22,7 @@ fun Application.configureSecurity(jwtTokenConfig: JWTTokenConfig) {
             verifier(jwtVerifier)
 
             validate { jwtCredential ->
+                println("Claims: ${jwtCredential.payload.claims.mapValues { it.value.asString() }}")
                 val userId = jwtCredential.payload.getClaim("user_id").asInt()
                 if (userId != null){
                     JWTPrincipal(jwtCredential.payload)
@@ -31,6 +32,7 @@ fun Application.configureSecurity(jwtTokenConfig: JWTTokenConfig) {
             }
 
             challenge { _, _ ->
+                println("Auth failed: token = ${call.request.headers["Authorization"]}")
                 call.respondText("Token is not valid or has expired",
                     status = HttpStatusCode.Unauthorized)
             }
