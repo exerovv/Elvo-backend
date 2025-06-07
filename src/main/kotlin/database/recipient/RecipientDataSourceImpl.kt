@@ -1,6 +1,7 @@
 package com.example.database.recipient
 
 
+import com.example.database.address.AddressTable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
@@ -19,7 +20,30 @@ class RecipientDataSourceImpl : RecipientDataSource {
             }
     }
 
-    override suspend fun getRecipientById(userId: Int, recipientId: Int): RecipientDTO? = newSuspendedTransaction {
+    override suspend fun getRecipientById(userId: Int, recipientId: Int): SingleRecipientResponse? = newSuspendedTransaction {
+        RecipientTable.join(
+            otherTable = AddressTable,
+            joinType = JoinType.INNER,
+            additionalConstraint = { AddressTable.id eq RecipientTable.addressId}
+        )
+            .selectAll()
+            .where((RecipientTable.userId eq userId) and (RecipientTable.id eq recipientId))
+            .map {
+                val fullName = "${RecipientTable.name} ${RecipientTable.surname} ${RecipientTable.patronymic}"
+                val fullAddress = "${AddressTable.city}, ${AddressTable.street}, ${AddressTable.house}, ${AddressTable.building}, ${AddressTable.flat}, ${AddressTable.flat} "
+                SingleRecipientResponse(
+                    fullName = fullName,
+                    phone = RecipientTable.phone.toString(),
+                    address = fullAddress
+                )
+            }
+            .firstOrNull()
+    }
+
+    override suspend fun getRecipientByIdForUpdate(
+        userId: Int,
+        recipientId: Int
+    ): RecipientDTO? = newSuspendedTransaction {
         RecipientTable
             .selectAll()
             .where((RecipientTable.userId eq userId) and (RecipientTable.id eq recipientId))

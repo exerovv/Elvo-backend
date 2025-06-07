@@ -245,7 +245,7 @@ fun Route.recipientRouting(
             }
 
 
-            val foundRecipient = recipientDataSource.getRecipientById(userid, recipientId)
+            val foundRecipient = recipientDataSource.getRecipientByIdForUpdate(userid, recipientId)
 
             if (foundRecipient == null) {
                 call.respond(
