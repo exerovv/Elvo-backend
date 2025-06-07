@@ -29,11 +29,23 @@ class RecipientDataSourceImpl : RecipientDataSource {
             .selectAll()
             .where((RecipientTable.userId eq userId) and (RecipientTable.id eq recipientId))
             .map {
-                val fullName = "${RecipientTable.name} ${RecipientTable.surname} ${RecipientTable.patronymic}"
-                val fullAddress = "${AddressTable.city}, ${AddressTable.street}, ${AddressTable.house}, ${AddressTable.building}, ${AddressTable.flat}, ${AddressTable.flat} "
+                val fullName = "${it[RecipientTable.name]} ${it[RecipientTable.surname]} ${it[RecipientTable.patronymic]}".trim()
+                val fullAddress = StringBuilder()
+                    .append(it[AddressTable.city])
+                    .append(", ")
+                    .append(it[AddressTable.street])
+                    .append(", ")
+                    .append(it[AddressTable.house])
+                    .append(", ")
+                    .append(it[AddressTable.building]?.let { building -> "${building}, " } ?: "")
+                    .append(it[AddressTable.flat])
+                    .append(", ")
+                    .append(it[AddressTable.floor])
+                    .toString().trim()
+
                 SingleRecipientResponse(
                     fullName = fullName,
-                    phone = RecipientTable.phone.toString(),
+                    phone = it[RecipientTable.phone],
                     address = fullAddress
                 )
             }
