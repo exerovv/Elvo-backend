@@ -3,7 +3,7 @@ ktor:
     modules:
       - com.example.ApplicationKt.module
   deployment:
-    port: 52144
+    port: $PORT
   jwt:
     secret: $JWT_SECRET
     issuer: "http://localhost:8080"
