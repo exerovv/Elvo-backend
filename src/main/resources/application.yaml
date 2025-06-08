@@ -3,7 +3,7 @@ ktor:
     modules:
       - com.example.ApplicationKt.module
   deployment:
-    port: $PORT
+    port: 52144
   jwt:
     secret: $JWT_SECRET
     issuer: "http://localhost:8080"
@@ -15,5 +15,5 @@ ktor:
     user: $POSTGRES_USER
     password: $POSTGRES_PASSWORD
   refresh:
-    expiry: "604_800_000"
+    expiry: "604800000"
     length: "32"
