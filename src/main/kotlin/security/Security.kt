@@ -2,12 +2,14 @@ package com.example.authentication
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
+import com.example.core.ErrorResponse
 import com.example.security.token.JWTTokenConfig
-import io.ktor.http.HttpStatusCode
+import com.example.utils.ErrorCode
+import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.auth.*
 import io.ktor.server.auth.jwt.*
-import io.ktor.server.response.respondText
+import io.ktor.server.response.*
 
 fun Application.configureSecurity(jwtTokenConfig: JWTTokenConfig) {
     install(Authentication){
@@ -33,8 +35,11 @@ fun Application.configureSecurity(jwtTokenConfig: JWTTokenConfig) {
 
             challenge { _, _ ->
                 println("Auth failed: token = ${call.request.headers["Authorization"]}")
-                call.respondText("Token is not valid or has expired",
-                    status = HttpStatusCode.Unauthorized)
+                call.respond(
+                    HttpStatusCode.BadRequest, ErrorResponse(
+                        errorCode = ErrorCode.UNAUTHORIZED
+                    )
+                )
             }
         }
     }

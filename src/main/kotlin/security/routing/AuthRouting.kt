@@ -229,7 +229,7 @@ fun Application.authRouting(
             if (foundToken == null || foundToken.expiresAt > Clock.System.now()) {
                 call.respond(
                     HttpStatusCode.Unauthorized, ErrorResponse(
-                        errorCode = ErrorCode.SESSION_EXPIRED
+                        errorCode = ErrorCode.UNAUTHORIZED
                     )
                 )
                 return@post

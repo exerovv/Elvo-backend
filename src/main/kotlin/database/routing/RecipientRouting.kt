@@ -18,6 +18,7 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
 import io.ktor.server.routing.route
+import io.netty.handler.codec.http2.Http2Exception
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import java.lang.Exception
 import kotlin.text.toInt
@@ -63,11 +64,6 @@ fun Route.recipientRouting(
             val addressIsCorrect = RecipientValidator.validateAddress(city, street, house, flat, floor)
 
             if (!phoneIsCorrect) {
-                call.respond(
-                    HttpStatusCode.BadRequest, ErrorResponse(
-                        errorCode = ErrorCode.INCORRECT_PHONE
-                    )
-                )
                 return@post
             }
             if (!fullNameIsCorrect) {
@@ -153,7 +149,7 @@ fun Route.recipientRouting(
             )
         }
 
-        get("{id}/get") {
+        get("get/{id}") {
             val userId = call.getUserIdClaim() ?: run {
                 call.respond(
                     HttpStatusCode.Conflict, ErrorResponse(
@@ -190,7 +186,7 @@ fun Route.recipientRouting(
             )
         }
 
-        put("{id}/update") {
+        put("update/{id}") {
             val userid = call.getUserIdClaim() ?: run {
                 call.respond(
                     HttpStatusCode.Conflict, ErrorResponse(
@@ -397,11 +393,30 @@ fun Route.recipientRouting(
 
             var isSuccess = true
             if (updatedRecipient != foundRecipient) {
-                isSuccess = recipientDataSource.updateRecipient(userid, recipientId, updatedRecipient)
+                try {
+                    isSuccess = recipientDataSource.updateRecipient(userid, recipientId, updatedRecipient)
+                } catch (_: Http2Exception) {
+                    call.respond(
+                        HttpStatusCode.Conflict, ErrorResponse(
+                            errorCode = ErrorCode.SERVER_ERROR
+                        )
+                    )
+                    return@put
+                }
+
             }
 
             if (updatedAddress != foundAddress) {
-                isSuccess = addressDataSource.updateAddress(foundRecipient.addressId, updatedAddress)
+                try {
+                    isSuccess = addressDataSource.updateAddress(foundRecipient.addressId, updatedAddress)
+                } catch (_: Http2Exception) {
+                    call.respond(
+                        HttpStatusCode.Conflict, ErrorResponse(
+                            errorCode = ErrorCode.SERVER_ERROR
+                        )
+                    )
+                    return@put
+                }
             }
 
             if (!isSuccess) {

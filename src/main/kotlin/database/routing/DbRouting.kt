@@ -1,20 +1,20 @@
 package com.example.database.routing
 
+import com.example.database.address.AddressDataSource
+import com.example.database.faq.FaqDataSource
 import com.example.database.ordering.OrderingDataSource
 import com.example.database.popularitems.PopularItemsDataSource
 import com.example.database.recipient.RecipientDataSource
-import com.example.database.address.AddressDataSource
-import com.example.database.faq.FAQDataSource
-import io.ktor.server.application.Application
+import io.ktor.server.application.*
 import io.ktor.server.auth.*
-import io.ktor.server.routing.routing
+import io.ktor.server.routing.*
 
 fun Application.dbRouting(
     orderingDataSource: OrderingDataSource,
     popularItemsDataSource: PopularItemsDataSource,
     recipientDataSource: RecipientDataSource,
     addressDataSource: AddressDataSource,
-    faqDataSource: FAQDataSource
+    faqDataSource: FaqDataSource
 ) {
     routing {
         popularRouting(popularItemsDataSource = popularItemsDataSource)

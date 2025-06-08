@@ -1,7 +1,7 @@
 package com.example
 
 import com.example.database.address.AddressDataSource
-import com.example.database.faq.FAQDataSource
+import com.example.database.faq.FaqDataSource
 import com.example.database.ordering.OrderingDataSource
 import com.example.database.popularitems.PopularItemsDataSource
 import com.example.database.recipient.RecipientDataSource
@@ -28,7 +28,7 @@ fun Application.configureRouting(
     popularItemsDataSource: PopularItemsDataSource,
     recipientDataSource: RecipientDataSource,
     addressDataSource: AddressDataSource,
-    faqDataSource: FAQDataSource
+    faqDataSource: FaqDataSource
 ) {
     authRouting(hashingService, userDataSource, jwtTokenService, jwtTokenConfig, refreshTokenConfig, refreshTokenService, tokenDataSource)
     dbRouting(

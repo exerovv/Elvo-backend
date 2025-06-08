@@ -31,11 +31,11 @@ class RecipientDataSourceImpl : RecipientDataSource {
             .map {
                 val fullName = "${it[RecipientTable.name]} ${it[RecipientTable.surname]} ${it[RecipientTable.patronymic] ?: ""}".trim()
                 val fullAddress = StringBuilder()
-                    .append(it[AddressTable.city])
+                    .append("г. ${it[AddressTable.city]}")
                     .append(", ")
                     .append(it[AddressTable.street])
                     .append(", ")
-                    .append(it[AddressTable.house])
+                    .append("д. ${it[AddressTable.house]}")
                     .append(it[AddressTable.building]?.let { building -> ", ${building}, " } ?: ", ")
                     .append("кв. ${it[AddressTable.flat]}")
                     .append(", ")

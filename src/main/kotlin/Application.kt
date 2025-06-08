@@ -3,7 +3,7 @@ package com.example
 import com.example.authentication.configureSecurity
 import com.example.database.address.AddressDataSourceImpl
 import com.example.database.configureDatabases
-import com.example.database.faq.FAQDataSourceImpl
+import com.example.database.faq.FaqDataSourceImpl
 import com.example.database.ordering.OrderingDataSourceImpl
 import com.example.database.popularitems.PopularItemsDataSourceImpl
 import com.example.database.recipient.RecipientDataSourceImpl
@@ -22,6 +22,7 @@ fun main(args: Array<String>) {
 
 fun Application.module() {
     val jwt = environment.config.config("ktor.jwt")
+    val refresh = environment.config.config("ktor.refresh")
     val jwtTokenService = JwtTokenService()
     val refreshTokenService = RefreshTokenService()
     val jwtTokenConfig = JWTTokenConfig(
@@ -31,8 +32,8 @@ fun Application.module() {
         secret = jwt.property("secret").getString(),
     )
     val refreshTokenConfig = RefreshTokenConfig(
-        90000,
-        32
+        refresh.property("expiry").getString().toLong(),
+        refresh.property("length").getString().toInt()
     )
     val hashingService = BcryptHashingService()
     val userDataSource = UserDataSourceImpl()
@@ -41,7 +42,7 @@ fun Application.module() {
     val popularItemsDataSource = PopularItemsDataSourceImpl()
     val recipientDataSource = RecipientDataSourceImpl()
     val addressDataSource = AddressDataSourceImpl()
-    val faqDataSource = FAQDataSourceImpl()
+    val faqDataSource = FaqDataSourceImpl()
     configureSerialization()
     configureDatabases()
     configureSecurity(jwtTokenConfig)
