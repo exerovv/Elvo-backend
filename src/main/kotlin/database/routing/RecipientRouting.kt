@@ -3,25 +3,15 @@ package com.example.database.routing
 import com.example.core.ErrorResponse
 import com.example.database.address.AddressDTO
 import com.example.database.address.AddressDataSource
-import com.example.database.recipient.RecipientDTO
-import com.example.database.recipient.RecipientDataSource
-import com.example.database.recipient.RecipientRequest
-import com.example.database.recipient.UpdateRecipientRequest
+import com.example.database.recipient.*
 import com.example.database.token.getUserIdClaim
 import com.example.utils.ErrorCode
 import com.example.utils.RecipientValidator
-import io.ktor.http.HttpStatusCode
-import io.ktor.server.request.receiveNullable
-import io.ktor.server.response.respond
-import io.ktor.server.routing.Route
-import io.ktor.server.routing.get
-import io.ktor.server.routing.post
-import io.ktor.server.routing.put
-import io.ktor.server.routing.route
-import io.netty.handler.codec.http2.Http2Exception
+import io.ktor.http.*
+import io.ktor.server.request.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
-import java.lang.Exception
-import kotlin.text.toInt
 
 fun Route.recipientRouting(
     recipientDataSource: RecipientDataSource,
@@ -52,20 +42,26 @@ fun Route.recipientRouting(
             val surname = request.surname
             val patronymic = request.patronymic
             val phone = request.phone
-            val city: String = request.city
-            val street: String = request.street
-            val house: Int = request.house
-            val building: String? = request.building
-            val flat: Int = request.flat
-            val floor: Int = request.floor
+            val city = request.city
+            val street = request.street
+            val house = request.house
+            val building = request.building
+            val flat = request.flat
+            val floor = request.floor
 
             val phoneIsCorrect = RecipientValidator.validatePhone(phone)
             val fullNameIsCorrect = RecipientValidator.validateFullName(name, surname, patronymic)
             val addressIsCorrect = RecipientValidator.validateAddress(city, street, house, flat, floor)
 
             if (!phoneIsCorrect) {
+                call.respond(
+                    HttpStatusCode.BadRequest, ErrorResponse(
+                        errorCode = ErrorCode.INCORRECT_PHONE
+                    )
+                )
                 return@post
             }
+
             if (!fullNameIsCorrect) {
                 call.respond(
                     HttpStatusCode.BadRequest, ErrorResponse(
@@ -74,6 +70,7 @@ fun Route.recipientRouting(
                 )
                 return@post
             }
+
             if (!addressIsCorrect) {
                 call.respond(
                     HttpStatusCode.BadRequest, ErrorResponse(
@@ -83,7 +80,7 @@ fun Route.recipientRouting(
                 return@post
             }
 
-            val checkRecipient = recipientDataSource.checkRecipient(userId, phone)
+            val checkRecipient = recipientDataSource.checkRecipient(userId, phone!!)
 
             if (!checkRecipient) {
                 call.respond(
@@ -94,33 +91,31 @@ fun Route.recipientRouting(
                 return@post
             }
 
-            try {
+            val insertedRecipient = try {
                 newSuspendedTransaction {
                     val addressId = addressDataSource.insertAddress(
                         AddressDTO(
-                            city = city,
-                            street = street,
-                            house = house,
+                            city = city!!,
+                            street = street!!,
+                            house = house!!,
                             building = building,
-                            flat = flat,
-                            floor = floor
+                            flat = flat!!,
+                            floor = floor!!
                         )
                     )
 
-                    recipientDataSource.insertRecipient(
+                    val recipientId = recipientDataSource.insertRecipient(
                         userId = userId,
                         RecipientDTO(
-                            name = name,
-                            surname = surname,
+                            name = name!!,
+                            surname = surname!!,
                             patronymic = patronymic,
                             addressId = addressId,
                             phone = phone
                         )
                     )
 
-                    call.respond(
-                        HttpStatusCode.OK
-                    )
+                    recipientDataSource.getRecipientShortById(recipientId)
                 }
             } catch (_: Exception) {
                 call.respond(
@@ -130,6 +125,20 @@ fun Route.recipientRouting(
                 )
                 return@post
             }
+
+            if (insertedRecipient == null) {
+                call.respond(
+                    HttpStatusCode.Conflict, ErrorResponse(
+                        errorCode = ErrorCode.SERVER_ERROR
+                    )
+                )
+                return@post
+            }
+
+            call.respond(
+                status = HttpStatusCode.OK,
+                message = insertedRecipient
+            )
         }
 
         get("get") {
@@ -211,7 +220,6 @@ fun Route.recipientRouting(
             val updateRequest = call.receiveNullable<UpdateRecipientRequest>()
 
             if (updateRequest == null) {
-                println(2)
                 call.respond(
                     HttpStatusCode.BadRequest, ErrorResponse(
                         errorCode = ErrorCode.INCORRECT_CREDENTIALS
@@ -220,28 +228,37 @@ fun Route.recipientRouting(
                 return@put
             }
 
-            updateRequest.run {
-                if (!RecipientValidator.validateAllFields(
-                        name,
-                        surname,
-                        patronymic,
-                        phone,
-                        city,
-                        street,
-                        house,
-                        flat,
-                        floor
-                    )
-                ) {
-                    call.respond(
-                        HttpStatusCode.BadRequest, ErrorResponse(
-                            errorCode = ErrorCode.INCORRECT_CREDENTIALS
-                        )
-                    )
-                    return@put
-                }
-            }
+            val name = updateRequest.name
+            val surname = updateRequest.surname
+            val patronymic = updateRequest.patronymic
+            val phone = updateRequest.phone
+            val city = updateRequest.city
+            val street = updateRequest.street
+            val house = updateRequest.house
+            val building = updateRequest.building
+            val flat = updateRequest.flat
+            val floor = updateRequest.floor
 
+            if (!RecipientValidator.validateAllFields(
+                    name,
+                    surname,
+                    patronymic,
+                    phone,
+                    city,
+                    street,
+                    house,
+                    building,
+                    flat,
+                    floor
+                )
+            ) {
+                call.respond(
+                    HttpStatusCode.BadRequest, ErrorResponse(
+                        errorCode = ErrorCode.NOTHING_CHANGED
+                    )
+                )
+                return@put
+            }
 
             val foundRecipient = recipientDataSource.getRecipientByIdForUpdate(userid, recipientId)
 
@@ -265,38 +282,7 @@ fun Route.recipientRouting(
                 return@put
             }
 
-            updateRequest.name?.let {
-                require(RecipientValidator.validateNameFields(it)) {
-                    call.respond(
-                        HttpStatusCode.Conflict, ErrorResponse(
-                            errorCode = ErrorCode.INCORRECT_NAME
-                        )
-                    )
-                    return@put
-                }
-            }
-
-            updateRequest.surname?.let {
-                require(RecipientValidator.validateNameFields(it)) {
-                    call.respond(
-                        HttpStatusCode.Conflict, ErrorResponse(
-                            errorCode = ErrorCode.INCORRECT_NAME
-                        )
-                    )
-                    return@put
-                }
-            }
-
-            updateRequest.patronymic?.let {
-                require(RecipientValidator.validateNameFields(it)) {
-                    call.respond(
-                        HttpStatusCode.Conflict, ErrorResponse(
-                            errorCode = ErrorCode.INCORRECT_NAME
-                        )
-                    )
-                    return@put
-                }
-            }
+            val nameChanged = RecipientValidator.nameChanged(name, surname, patronymic)
 
             updateRequest.phone?.let {
                 require(RecipientValidator.validatePhone(it)) {
@@ -309,10 +295,35 @@ fun Route.recipientRouting(
                 }
             }
 
-            updateRequest.city?.let {
-                require(RecipientValidator.validateAddressFields(it)) {
+            if (nameChanged) {
+                if (!RecipientValidator.validateFullName(
+                        name = name ?: foundRecipient.name,
+                        surname = surname ?: foundRecipient.surname,
+                        patronymic = patronymic ?: foundRecipient.patronymic
+                    )
+                ) {
                     call.respond(
                         HttpStatusCode.Conflict, ErrorResponse(
+                            errorCode = ErrorCode.INCORRECT_NAME
+                        )
+                    )
+                    return@put
+                }
+            }
+
+            val addressChanged = RecipientValidator.addressChanged(city, street, house, building, flat, floor)
+
+            if (addressChanged){
+                if (!RecipientValidator.validateAddress(
+                        city = city ?: foundAddress.city,
+                        street = street ?: foundAddress.street,
+                        house = house ?: foundAddress.house,
+                        flat = flat ?: foundAddress.flat,
+                        floor = floor ?: foundAddress.floor,
+                    )
+                ) {
+                    call.respond(
+                        HttpStatusCode.BadRequest, ErrorResponse(
                             errorCode = ErrorCode.INCORRECT_ADDRESS
                         )
                     )
@@ -320,96 +331,64 @@ fun Route.recipientRouting(
                 }
             }
 
-            updateRequest.street?.let {
-                require(RecipientValidator.validateAddressFields(it)) {
-                    call.respond(
-                        HttpStatusCode.Conflict, ErrorResponse(
-                            errorCode = ErrorCode.INCORRECT_ADDRESS
+
+            if (updateRequest.phone != null || nameChanged) {
+                val updatedRecipient = foundRecipient.copy(
+                    name = name ?: foundRecipient.name,
+                    surname = surname ?: foundRecipient.surname,
+                    patronymic = patronymic ?: foundRecipient.patronymic,
+                    phone = phone ?: foundRecipient.phone,
+                )
+
+                if (updatedRecipient != foundRecipient) {
+                    try {
+                        recipientDataSource.updateRecipient(userid, recipientId, updatedRecipient)
+                        if (nameChanged) {
+                            call.respond(
+                                HttpStatusCode.OK,
+                                UpdateResponse(
+                                    RecipientShortDTO(
+                                        recipientId = recipientId,
+                                        fullName = "${updatedRecipient.name} ${updatedRecipient.surname} ${updatedRecipient.patronymic ?: ""}".trim()
+                                    )
+                                )
+                            )
+                        } else {
+                            call.respond(
+                                HttpStatusCode.OK,
+                                UpdateResponse()
+                            )
+                        }
+
+                    } catch (_: Exception) {
+                        call.respond(
+                            HttpStatusCode.Conflict, ErrorResponse(
+                                errorCode = ErrorCode.SERVER_ERROR
+                            )
                         )
-                    )
-                    return@put
+                        return@put
+                    }
                 }
             }
-
-            updateRequest.house?.let {
-                require(RecipientValidator.validateAddressFields(it)) {
-                    call.respond(
-                        HttpStatusCode.Conflict, ErrorResponse(
-                            errorCode = ErrorCode.INCORRECT_ADDRESS
-                        )
-                    )
-                    return@put
-                }
-            }
-
-            updateRequest.building?.let {
-                require(RecipientValidator.validateAddressFields(it)) {
-                    call.respond(
-                        HttpStatusCode.Conflict, ErrorResponse(
-                            errorCode = ErrorCode.INCORRECT_ADDRESS
-                        )
-                    )
-                    return@put
-                }
-            }
-
-            updateRequest.flat?.let {
-                require(RecipientValidator.validateAddressFields(it)) {
-                    call.respond(
-                        HttpStatusCode.Conflict, ErrorResponse(
-                            errorCode = ErrorCode.INCORRECT_ADDRESS
-                        )
-                    )
-                    return@put
-                }
-            }
-
-            updateRequest.floor?.let {
-                require(RecipientValidator.validateAddressFields(it)) {
-                    call.respond(
-                        HttpStatusCode.Conflict, ErrorResponse(
-                            errorCode = ErrorCode.INCORRECT_ADDRESS
-                        )
-                    )
-                    return@put
-                }
-            }
-
-            val updatedRecipient = foundRecipient.copy(
-                name = updateRequest.name ?: foundRecipient.name,
-                surname = updateRequest.surname ?: foundRecipient.surname,
-                patronymic = updateRequest.patronymic ?: foundRecipient.patronymic,
-                phone = updateRequest.phone ?: foundRecipient.phone,
-            )
 
             val updatedAddress = foundAddress.copy(
-                city = updateRequest.city ?: foundAddress.city,
-                street = updateRequest.street ?: foundAddress.street,
-                house = updateRequest.house ?: foundAddress.house,
-                building = updateRequest.building ?: foundAddress.building,
-                flat = updateRequest.flat ?: foundAddress.flat,
-                floor = updateRequest.floor ?: foundAddress.floor,
+                city = city ?: foundAddress.city,
+                street = street ?: foundAddress.street,
+                house = house ?: foundAddress.house,
+                building = building ?: foundAddress.building,
+                flat = flat ?: foundAddress.flat,
+                floor = floor ?: foundAddress.floor,
             )
 
-            var isSuccess = true
-            if (updatedRecipient != foundRecipient) {
-                try {
-                    isSuccess = recipientDataSource.updateRecipient(userid, recipientId, updatedRecipient)
-                } catch (_: Http2Exception) {
-                    call.respond(
-                        HttpStatusCode.Conflict, ErrorResponse(
-                            errorCode = ErrorCode.SERVER_ERROR
-                        )
-                    )
-                    return@put
-                }
-
-            }
 
             if (updatedAddress != foundAddress) {
                 try {
-                    isSuccess = addressDataSource.updateAddress(foundRecipient.addressId, updatedAddress)
-                } catch (_: Http2Exception) {
+                    addressDataSource.updateAddress(foundRecipient.addressId, updatedAddress)
+                    call.respond(
+                        HttpStatusCode.OK,
+                        UpdateResponse()
+                    )
+                } catch (_: Exception) {
                     call.respond(
                         HttpStatusCode.Conflict, ErrorResponse(
                             errorCode = ErrorCode.SERVER_ERROR
@@ -418,19 +397,6 @@ fun Route.recipientRouting(
                     return@put
                 }
             }
-
-            if (!isSuccess) {
-                call.respond(
-                    HttpStatusCode.Conflict, ErrorResponse(
-                        errorCode = ErrorCode.SERVER_ERROR
-                    )
-                )
-                return@put
-            }
-
-            call.respond(
-                HttpStatusCode.OK
-            )
         }
     }
 

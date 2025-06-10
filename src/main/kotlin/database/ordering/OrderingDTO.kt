@@ -1,15 +1,15 @@
 package com.example.database.ordering
 
-import kotlinx.datetime.LocalDateTime
-import java.math.BigDecimal
+import com.example.database.recipient.RecipientTable
+import com.example.database.user.UserTable
+import kotlinx.datetime.Instant
 
 data class OrderingDTO(
-    val orderingId: Int,
-    val userId: Int,
-    val status: String,
-    val formationDate: LocalDateTime,
-    val weight: BigDecimal,
-    val deliveryPrice: BigDecimal,
-    val totalPrice: BigDecimal
+    val recipientId: Int,
+    val createdAt: Instant,
+    val weight: Double,
+    val totalPrice: Double,
+    val currentStatusId: Int,
+    val globalStatus: String
 )
 

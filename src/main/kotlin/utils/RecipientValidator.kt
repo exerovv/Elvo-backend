@@ -1,39 +1,25 @@
 package com.example.utils
 
-import com.example.core.ErrorResponse
-import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.ApplicationCall
-import io.ktor.server.response.respond
-
 object RecipientValidator {
-    fun validatePhone(phone: String): Boolean {
-        return phone.isNotBlank() && """^(\+7|8)[\s\-]?\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}$""".toRegex()
+    fun validatePhone(phone: String?): Boolean {
+        return !(phone.isNullOrBlank()) && """^(\+7|8)[\s\-]?\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}$""".toRegex()
             .matches(phone)
     }
 
-    fun validateFullName(name: String, surname: String, patronymic: String?): Boolean {
-        val fullName = "$name $surname ${patronymic ?: ""}".trim()
-
+    fun validateFullName(name: String?, surname: String?, patronymic: String?): Boolean {
+        val fullName = "${name ?: ""} ${surname ?: ""} ${patronymic ?: ""}".trim()
         return fullName.isNotBlank() && """^(?=.{1,40}$)[а-яёА-ЯЁ]+(?:[-' ][а-яёА-ЯЁ]+)*$""".toRegex()
             .matches(fullName)
     }
 
-    fun validateAddress(city: String, street: String, house: Int, flat: Int, floor: Int) =
-        city.isNotBlank() && street.isNotBlank() && house.toString().isNotBlank() && flat.toString()
-            .isNotBlank() && floor.toString().isNotBlank()
-
-    fun validateNameFields(name: String): Boolean{
-        val nameRegex = Regex("^[A-ZА-Я][a-zа-я]+(-[A-ZА-Я][a-zа-я]+)?$")
-        return nameRegex.matches(name)
+    fun validateAddress(city: String?, street: String?, house: Int?, flat: Int?, floor: Int?): Boolean {
+        return !(city.isNullOrBlank() || street.isNullOrBlank() || house == null || flat == null || floor == null)
     }
 
-    fun <T> validateAddressFields(address: T): Boolean{
-        return when(address){
-            is Int -> address.toString().isNotBlank()
-            is String -> address.isNotBlank()
-            else -> false
-        }
-    }
+    fun nameChanged(newName: String?, newSurname: String?, newPatronymic: String?) = newName != null || newSurname != null || newPatronymic != null
+
+    fun addressChanged(newCity: String?, newStreet: String?, newHouse: Int?, newBuilding: String?, newFlat: Int?, newFloor: Int?) =
+        newCity != null || newStreet != null || newHouse != null || newBuilding != null || newFloor != null || newFlat != null
 
     fun validateAllFields(
         name: String?,
@@ -43,6 +29,7 @@ object RecipientValidator {
         city: String?,
         street: String?,
         house: Int?,
+        building: String?,
         flat: Int?,
         floor: Int?
     ): Boolean {
@@ -53,23 +40,8 @@ object RecipientValidator {
                 city == null &&
                 street == null &&
                 house == null &&
+                building == null &&
                 flat == null &&
                 floor == null)
-    }
-
-    suspend fun <T> ApplicationCall.validateField(
-        value: T?,
-        validation: (T) -> Boolean,
-        errorCode: ErrorCode
-    ) {
-        value?.let {
-            require(validation(it)) {
-                respond(
-                    HttpStatusCode.Conflict, ErrorResponse(
-                        errorCode = errorCode
-                    )
-                )
-            }
-        }
     }
 }

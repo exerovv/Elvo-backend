@@ -1,29 +1,22 @@
 package com.example.security.routing
 
+import com.example.core.ErrorResponse
 import com.example.database.token.Token
 import com.example.database.token.TokenDataSource
-import com.example.security.request.AuthRequest
-import com.example.database.user.*
+import com.example.database.user.User
+import com.example.database.user.UserDataSource
 import com.example.security.hashing.HashingService
+import com.example.security.request.AuthRequest
 import com.example.security.request.RefreshRequest
-import com.example.core.ErrorResponse
+import com.example.security.response.AuthResponse
 import com.example.security.response.TokenResponse
-import com.example.security.token.TokenClaim
-import com.example.security.token.JWTTokenConfig
-import com.example.security.token.JwtTokenService
-import com.example.security.token.RefreshTokenConfig
-import com.example.security.token.RefreshTokenService
+import com.example.security.token.*
 import com.example.utils.ErrorCode
-import io.ktor.http.HttpStatusCode
-import io.ktor.server.application.Application
-import io.ktor.server.auth.authenticate
-import io.ktor.server.auth.jwt.JWTPrincipal
-import io.ktor.server.auth.principal
+import io.ktor.http.*
+import io.ktor.server.application.*
 import io.ktor.server.request.*
-import io.ktor.server.response.respond
-import io.ktor.server.routing.get
-import io.ktor.server.routing.post
-import io.ktor.server.routing.routing
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
 import kotlinx.datetime.Clock
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import kotlin.time.Duration.Companion.milliseconds
@@ -51,7 +44,6 @@ fun Application.authRouting(
 
             val areFieldsBlank = requestData.username.isBlank() || requestData.password.isBlank()
             val isPwdTooShort = requestData.password.length < 8
-            val userExists = userDataSource.userExists(requestData.username)
             if (areFieldsBlank) {
                 call.respond(
                     HttpStatusCode.BadRequest,
@@ -69,15 +61,6 @@ fun Application.authRouting(
                     )
                 )
                 return@post
-            }
-            if (userExists) {
-                call.respond(
-                    HttpStatusCode.BadRequest,
-                    ErrorResponse(
-                        errorCode = ErrorCode.USER_ALREADY_EXISTS
-                    )
-                )
-                return@post
             } else {
                 val hash = hashingService.generateHash(requestData.password)
                 val user = User(
@@ -87,9 +70,9 @@ fun Application.authRouting(
 
                 val refreshToken = refreshTokenService.generate(refreshTokenConfig)
 
-                val userId = newSuspendedTransaction {
-                    val userId = userDataSource.insertUser(user)
-                    userId?.let {
+                val userInfo = try {
+                    newSuspendedTransaction {
+                        val userId = userDataSource.insertUser(user)
                         tokenDataSource.insertToken(
                             Token(
                                 userId,
@@ -99,12 +82,21 @@ fun Application.authRouting(
                                 false
                             )
                         )
+                        userDataSource.getUserInfoById(userId)
                     }
-                    userId
-                }
-                if (userId == null) {
+                } catch (_: Exception) {
                     call.respond(
-                        HttpStatusCode.Conflict,
+                        HttpStatusCode.BadRequest,
+                        ErrorResponse(
+                            errorCode = ErrorCode.USER_ALREADY_EXISTS
+                        )
+                    )
+                    return@post
+                }
+
+                if(userInfo == null){
+                    call.respond(
+                        HttpStatusCode.BadRequest,
                         ErrorResponse(
                             errorCode = ErrorCode.SERVER_ERROR
                         )
@@ -116,14 +108,15 @@ fun Application.authRouting(
                     config = jwtTokenConfig,
                     TokenClaim(
                         name = "user_id",
-                        value = userId
+                        value = userInfo.userId
                     )
                 )
                 call.respond(
                     status = HttpStatusCode.OK,
-                    message = TokenResponse(
+                    message = AuthResponse(
                         accessToken = accessToken,
-                        refreshToken = refreshToken
+                        refreshToken = refreshToken,
+                        userInfo = userInfo
                     )
                 )
             }
@@ -164,6 +157,28 @@ fun Application.authRouting(
                 return@post
             }
 
+            val userInfo = try{
+                userDataSource.getUserInfoById(foundUser.userId)
+            }catch (_: Exception){
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    ErrorResponse(
+                        errorCode = ErrorCode.SERVER_ERROR
+                    )
+                )
+                return@post
+            }
+
+            if(userInfo == null){
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    ErrorResponse(
+                        errorCode = ErrorCode.SERVER_ERROR
+                    )
+                )
+                return@post
+            }
+
             val accessToken = jwtTokenService.generate(
                 config = jwtTokenConfig,
                 TokenClaim(
@@ -174,8 +189,7 @@ fun Application.authRouting(
 
             val refreshToken = refreshTokenService.generate(refreshTokenConfig)
 
-            val updatedRows = newSuspendedTransaction {
-                tokenDataSource.updateToken(
+            val result = tokenDataSource.updateToken(
                     Token(
                         foundUser.userId,
                         refreshToken,
@@ -184,9 +198,8 @@ fun Application.authRouting(
                         false
                     )
                 )
-            }
 
-            if (updatedRows < 1) {
+            if (!result) {
                 call.respond(
                     HttpStatusCode.Conflict,
                     ErrorResponse(
@@ -198,22 +211,25 @@ fun Application.authRouting(
 
             call.respond(
                 status = HttpStatusCode.OK,
-                message = TokenResponse(
+                message = AuthResponse(
                     accessToken = accessToken,
-                    refreshToken = refreshToken
+                    refreshToken = refreshToken,
+                    userInfo = userInfo
                 )
             )
         }
 
-        post("refresh") {
-            val requestData = runCatching<RefreshRequest?> { call.receiveNullable<RefreshRequest>() }.getOrNull() ?: run {
-                call.respond(
-                    HttpStatusCode.BadRequest, ErrorResponse(
-                        errorCode = ErrorCode.INCORRECT_CREDENTIALS
+        post("{id}/refresh") {
+            val requestData =
+                runCatching<RefreshRequest?> { call.receiveNullable<RefreshRequest>() }.getOrNull() ?: run {
+                    call.respond(
+                        HttpStatusCode.BadRequest, ErrorResponse(
+                            errorCode = ErrorCode.INCORRECT_CREDENTIALS
+                        )
                     )
-                )
-                return@post
-            }
+                    return@post
+                }
+
 
             if (requestData.refreshToken.isBlank()) {
                 call.respond(
@@ -224,7 +240,18 @@ fun Application.authRouting(
                 return@post
             }
 
-            val foundToken = tokenDataSource.findToken(requestData.refreshToken)
+            val userId = call.parameters["id"]?.toInt()
+
+            if (userId == null) {
+                call.respond(
+                    HttpStatusCode.BadRequest, ErrorResponse(
+                        errorCode = ErrorCode.INCORRECT_CREDENTIALS
+                    )
+                )
+                return@post
+            }
+
+            val foundToken = tokenDataSource.findToken(userId)
 
             if (foundToken == null || foundToken.expiresAt > Clock.System.now()) {
                 call.respond(
@@ -233,6 +260,7 @@ fun Application.authRouting(
                     )
                 )
                 return@post
+
             } else {
                 val newAccessToken = jwtTokenService.generate(
                     config = jwtTokenConfig,
@@ -244,7 +272,7 @@ fun Application.authRouting(
 
                 val refreshToken = refreshTokenService.generate(refreshTokenConfig)
 
-                val updatedRows = tokenDataSource.updateToken(
+                val result = tokenDataSource.updateToken(
                     Token(
                         foundToken.userId,
                         refreshToken,
@@ -253,7 +281,7 @@ fun Application.authRouting(
                         false
                     )
                 )
-                if (updatedRows < 1) {
+                if (!result) {
                     call.respond(
                         HttpStatusCode.Conflict,
                         ErrorResponse(
@@ -272,14 +300,6 @@ fun Application.authRouting(
             }
 
 
-        }
-
-        authenticate("jwt-auth") {
-            get("secret") {
-                val principal = call.principal<JWTPrincipal>()
-                val username = principal?.getClaim("username", String::class)
-                call.respond(HttpStatusCode.OK, "Your username is $username")
-            }
         }
     }
 }

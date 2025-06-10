@@ -3,11 +3,9 @@ package com.example.database.routing
 import com.example.core.ErrorResponse
 import com.example.database.popularitems.PopularItemsDataSource
 import com.example.utils.ErrorCode
-import io.ktor.http.HttpStatusCode
-import io.ktor.server.response.respond
-import io.ktor.server.routing.Route
-import io.ktor.server.routing.get
-import io.netty.handler.codec.http2.Http2Exception
+import io.ktor.http.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
 
 fun Route.popularRouting(
     popularItemsDataSource: PopularItemsDataSource
@@ -19,7 +17,7 @@ fun Route.popularRouting(
                 HttpStatusCode.OK,
                 result
             )
-        } catch (_: Http2Exception) {
+        } catch (_: Exception) {
             call.respond(
                 HttpStatusCode.Conflict,
                 ErrorResponse(ErrorCode.SERVER_ERROR)

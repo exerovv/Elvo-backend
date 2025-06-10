@@ -15,41 +15,61 @@ class RecipientDataSourceImpl : RecipientDataSource {
             .map {
                 RecipientShortDTO(
                     recipientId = it[RecipientTable.id].value,
-                    name = it[RecipientTable.name]
+                    fullName = "${it[RecipientTable.name]} ${it[RecipientTable.surname]} ${it[RecipientTable.patronymic] ?: ""}".trim()
                 )
             }
     }
 
-    override suspend fun getRecipientById(userId: Int, recipientId: Int): SingleRecipientResponse? = newSuspendedTransaction {
-        RecipientTable.join(
-            otherTable = AddressTable,
-            joinType = JoinType.INNER,
-            additionalConstraint = { AddressTable.id eq RecipientTable.addressId}
-        )
-            .selectAll()
-            .where((RecipientTable.userId eq userId) and (RecipientTable.id eq recipientId))
-            .map {
-                val fullName = "${it[RecipientTable.name]} ${it[RecipientTable.surname]} ${it[RecipientTable.patronymic] ?: ""}".trim()
-                val fullAddress = StringBuilder()
-                    .append("г. ${it[AddressTable.city]}")
-                    .append(", ")
-                    .append(it[AddressTable.street])
-                    .append(", ")
-                    .append("д. ${it[AddressTable.house]}")
-                    .append(it[AddressTable.building]?.let { building -> ", ${building}, " } ?: ", ")
-                    .append("кв. ${it[AddressTable.flat]}")
-                    .append(", ")
-                    .append("этаж ${it[AddressTable.floor]}")
-                    .toString().trim()
+    override suspend fun getRecipientById(userId: Int, recipientId: Int): SingleRecipientResponse? =
+        newSuspendedTransaction {
+            RecipientTable.join(
+                otherTable = AddressTable,
+                joinType = JoinType.INNER,
+                additionalConstraint = { AddressTable.id eq RecipientTable.addressId }
+            )
+                .selectAll()
+                .where((RecipientTable.userId eq userId) and (RecipientTable.id eq recipientId))
+                .map {
+                    val name = it[RecipientTable.name]
+                    val surname = it[RecipientTable.surname]
+                    val patronymic = it[RecipientTable.patronymic] ?: ""
+                    val phone = it[RecipientTable.phone]
+                    val city = it[AddressTable.city]
+                    val street = it[AddressTable.street]
+                    val house = it[AddressTable.house]
+                    val building = it[AddressTable.building]
+                    val flat = it[AddressTable.flat]
+                    val floor = it[AddressTable.floor]
+                    val fullName = "$name $surname $patronymic".trim()
+                    val fullAddress = StringBuilder()
+                        .append("г. $city")
+                        .append(", ")
+                        .append(street)
+                        .append(", ")
+                        .append("д. $house")
+                        .append(building?.let { building -> ", ${building}, " } ?: ", ")
+                        .append("кв. $flat")
+                        .append(", ")
+                        .append("этаж $floor")
+                        .toString().trim()
 
-                SingleRecipientResponse(
-                    fullName = fullName,
-                    phone = it[RecipientTable.phone],
-                    address = fullAddress
-                )
-            }
-            .firstOrNull()
-    }
+                    SingleRecipientResponse(
+                        name = name,
+                        surname = surname,
+                        patronymic = patronymic,
+                        fullName = fullName,
+                        phone = phone,
+                        city = city,
+                        street = street,
+                        house = house,
+                        building = building ?: "",
+                        flat = flat,
+                        floor = floor,
+                        address = fullAddress
+                    )
+                }
+                .firstOrNull()
+        }
 
     override suspend fun getRecipientByIdForUpdate(
         userId: Int,
@@ -108,5 +128,17 @@ class RecipientDataSourceImpl : RecipientDataSource {
             .where((RecipientTable.userId eq userId) and (RecipientTable.phone eq phone))
             .firstOrNull()
         result == null
+    }
+
+    override suspend fun getRecipientShortById(recipientId: Int): RecipientShortDTO? = newSuspendedTransaction {
+        RecipientTable
+            .selectAll()
+            .where { RecipientTable.id eq recipientId }
+            .map {
+                RecipientShortDTO(
+                    recipientId = recipientId,
+                    fullName = "${it[RecipientTable.name]} ${it[RecipientTable.surname]} ${it[RecipientTable.patronymic] ?: ""}".trim()
+                )
+            }.firstOrNull()
     }
 }

@@ -8,4 +8,5 @@ interface RecipientDataSource {
     suspend fun updateRecipient(userId: Int, recipientId: Int, recipient: RecipientDTO): Boolean
     suspend fun deleteRecipient(userId: Int, recipientId: Int): Boolean
     suspend fun checkRecipient(userId: Int, phone: String): Boolean
+    suspend fun getRecipientShortById(recipientId: Int): RecipientShortDTO?
 }

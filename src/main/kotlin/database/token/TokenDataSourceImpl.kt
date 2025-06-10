@@ -24,11 +24,11 @@ class TokenDataSourceImpl: TokenDataSource {
         }
     }
 
-    override suspend fun findToken(refreshToken: String): Token? {
+    override suspend fun findToken(userId: Int): Token? {
         return newSuspendedTransaction {
             TokenTable
                 .selectAll()
-                .where(TokenTable.refreshToken eq refreshToken)
+                .where(TokenTable.userId eq userId)
                 .map {
                     Token(
                         it[TokenTable.userId],
@@ -44,7 +44,7 @@ class TokenDataSourceImpl: TokenDataSource {
 
 
 
-    override suspend fun updateToken(token: Token): Int {
+    override suspend fun updateToken(token: Token): Boolean {
         return newSuspendedTransaction {
             TokenTable.update({
                 TokenTable.userId eq token.userId
@@ -52,7 +52,7 @@ class TokenDataSourceImpl: TokenDataSource {
                 it[TokenTable.refreshToken] = token.refreshToken
                 it[issuedAt] = token.issuedAt
                 it[TokenTable.expiresAt] = token.expiresAt
-            }
+            } > 0
         }
     }
 }
