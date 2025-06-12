@@ -20,5 +20,5 @@ object OrderingTable : IntIdTable("orders") {
     val ruDescription = varchar("ru_description", 100)
     val chDescription = varchar("ch_description", 100)
     val link = varchar("poizon_link", 50)
-    val itemPrice = double("total_price")
+    val itemPrice = double("item_price")
 }
