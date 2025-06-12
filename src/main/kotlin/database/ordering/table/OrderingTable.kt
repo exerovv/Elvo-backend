@@ -14,7 +14,7 @@ object OrderingTable : IntIdTable("orders") {
     val createdAt = timestamp("created_at")
     val weight = double("weight").nullable()
     val totalPrice = double("total_price").nullable()
-    val current_status_id = integer("current_status_id").references(UserTable.id)
+    val current_status_id = integer("current_status_id").references(StatusesTable.id)
     val globalStatus = varchar("global_status", 32)
     val isPaid = varchar("is_paid", 20)
     val ruDescription = varchar("ru_description", 100)
