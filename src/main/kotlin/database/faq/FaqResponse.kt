@@ -3,8 +3,7 @@ package com.example.database.faq
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class FaqDTO(
+data class FaqResponse(
     val question:String,
     val answer: String
 )
-

@@ -116,7 +116,7 @@ fun Application.authRouting(
                     message = AuthResponse(
                         accessToken = accessToken,
                         refreshToken = refreshToken,
-                        userInfo = userInfo
+                        userInfoResponse = userInfo
                     )
                 )
             }
@@ -214,7 +214,7 @@ fun Application.authRouting(
                 message = AuthResponse(
                     accessToken = accessToken,
                     refreshToken = refreshToken,
-                    userInfo = userInfo
+                    userInfoResponse = userInfo
                 )
             )
         }

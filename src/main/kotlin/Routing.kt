@@ -2,7 +2,9 @@ package com.example
 
 import com.example.database.address.AddressDataSource
 import com.example.database.faq.FaqDataSource
-import com.example.database.ordering.OrderingDataSource
+import com.example.database.ordering.datasource.OrderStatusesDataSource
+import com.example.database.ordering.datasource.OrderingDataSource
+import com.example.database.ordering.datasource.StatusesDataSource
 import com.example.database.popularitems.PopularItemsDataSource
 import com.example.database.recipient.RecipientDataSource
 import com.example.database.routing.dbRouting
@@ -28,7 +30,9 @@ fun Application.configureRouting(
     popularItemsDataSource: PopularItemsDataSource,
     recipientDataSource: RecipientDataSource,
     addressDataSource: AddressDataSource,
-    faqDataSource: FaqDataSource
+    faqDataSource: FaqDataSource,
+    orderStatusesDataSource: OrderStatusesDataSource,
+    statusesDataSource: StatusesDataSource
 ) {
     authRouting(hashingService, userDataSource, jwtTokenService, jwtTokenConfig, refreshTokenConfig, refreshTokenService, tokenDataSource)
     dbRouting(
@@ -36,6 +40,8 @@ fun Application.configureRouting(
         popularItemsDataSource = popularItemsDataSource,
         recipientDataSource = recipientDataSource,
         addressDataSource = addressDataSource,
-        faqDataSource = faqDataSource
+        faqDataSource = faqDataSource,
+        statusesDataSource = statusesDataSource,
+        orderStatusesDataSource =  orderStatusesDataSource
     )
 }

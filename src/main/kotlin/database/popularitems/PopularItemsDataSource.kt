@@ -1,5 +1,5 @@
 package com.example.database.popularitems
 
 interface PopularItemsDataSource {
-    suspend fun getPopularItems(): List<PopularItemDTO>
+    suspend fun getPopularItems(): List<PopularItemResponse>
 }

@@ -8,12 +8,12 @@ import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransacti
 
 class RecipientDataSourceImpl : RecipientDataSource {
 
-    override suspend fun getAllRecipientsForUser(userId: Int): List<RecipientShortDTO> = newSuspendedTransaction {
+    override suspend fun getAllRecipientsForUser(userId: Int): List<RecipientShortResponse> = newSuspendedTransaction {
         RecipientTable
             .selectAll()
             .where(RecipientTable.userId eq userId)
             .map {
-                RecipientShortDTO(
+                RecipientShortResponse(
                     recipientId = it[RecipientTable.id].value,
                     fullName = "${it[RecipientTable.name]} ${it[RecipientTable.surname]} ${it[RecipientTable.patronymic] ?: ""}".trim()
                 )
@@ -130,12 +130,12 @@ class RecipientDataSourceImpl : RecipientDataSource {
         result == null
     }
 
-    override suspend fun getRecipientShortById(recipientId: Int): RecipientShortDTO? = newSuspendedTransaction {
+    override suspend fun getRecipientShortById(recipientId: Int): RecipientShortResponse? = newSuspendedTransaction {
         RecipientTable
             .selectAll()
             .where { RecipientTable.id eq recipientId }
             .map {
-                RecipientShortDTO(
+                RecipientShortResponse(
                     recipientId = recipientId,
                     fullName = "${it[RecipientTable.name]} ${it[RecipientTable.surname]} ${it[RecipientTable.patronymic] ?: ""}".trim()
                 )

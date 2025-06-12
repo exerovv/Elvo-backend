@@ -5,13 +5,13 @@ import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransacti
 
 
 class PopularItemsDataSourceImpl : PopularItemsDataSource {
-    override suspend fun getPopularItems(): List<PopularItemDTO> = newSuspendedTransaction {
+    override suspend fun getPopularItems(): List<PopularItemResponse> = newSuspendedTransaction {
         PopularItemsTable
             .selectAll()
             .orderBy(Random())
             .limit(10)
             .map {
-                PopularItemDTO(
+                PopularItemResponse(
                     popularItemId = it[PopularItemsTable.id].value,
                     title = it[PopularItemsTable.title],
                     url = it[PopularItemsTable.url]

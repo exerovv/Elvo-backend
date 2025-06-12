@@ -5,11 +5,11 @@ import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransacti
 
 
 class FaqDataSourceImpl : FaqDataSource {
-    override suspend fun getFAQ(): List<FaqDTO> = newSuspendedTransaction {
+    override suspend fun getFAQ(): List<FaqResponse> = newSuspendedTransaction {
         FaqTable
             .selectAll()
             .map {
-                FaqDTO(
+                FaqResponse(
                     question = it[FaqTable.question],
                     answer = it[FaqTable.answer]
                 )

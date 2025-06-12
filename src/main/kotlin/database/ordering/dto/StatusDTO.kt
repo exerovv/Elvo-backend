@@ -1,9 +1,7 @@
-package com.example.database.ordering
-
+package com.example.database.ordering.dto
 
 data class StatusDTO(
-    val code: String,
+    val id: Int,
     val name: String,
     val globalStatus: String
 )
-

@@ -178,21 +178,28 @@ fun Route.recipientRouting(
                 return@get
             }
 
-            val result = recipientDataSource.getRecipientById(userId, recipientId)
-
-            if (result == null) {
+            try{
+                val result = recipientDataSource.getRecipientById(userId, recipientId)
+                if (result == null) {
+                    call.respond(
+                        HttpStatusCode.Conflict, ErrorResponse(
+                            errorCode = ErrorCode.RECIPIENT_NOT_FOUND
+                        )
+                    )
+                    return@get
+                }
+                call.respond(
+                    HttpStatusCode.OK,
+                    message = result
+                )
+            }catch(_: Exception){
                 call.respond(
                     HttpStatusCode.Conflict, ErrorResponse(
-                        errorCode = ErrorCode.RECIPIENT_NOT_FOUND
+                        errorCode = ErrorCode.SERVER_ERROR
                     )
                 )
                 return@get
             }
-
-            call.respond(
-                HttpStatusCode.OK,
-                message = result
-            )
         }
 
         put("update/{id}") {
@@ -260,7 +267,16 @@ fun Route.recipientRouting(
                 return@put
             }
 
-            val foundRecipient = recipientDataSource.getRecipientByIdForUpdate(userid, recipientId)
+            val foundRecipient = try{
+                recipientDataSource.getRecipientByIdForUpdate(userid, recipientId)
+            }catch (_: Exception){
+                call.respond(
+                    HttpStatusCode.Conflict, ErrorResponse(
+                        errorCode = ErrorCode.SERVER_ERROR
+                    )
+                )
+                return@put
+            }
 
             if (foundRecipient == null) {
                 call.respond(
@@ -271,7 +287,16 @@ fun Route.recipientRouting(
                 return@put
             }
 
-            val foundAddress = addressDataSource.getAddressById(foundRecipient.addressId)
+            val foundAddress = try{
+                addressDataSource.getAddressById(foundRecipient.addressId)
+            }catch (_: Exception){
+                call.respond(
+                    HttpStatusCode.Conflict, ErrorResponse(
+                        errorCode = ErrorCode.SERVER_ERROR
+                    )
+                )
+                return@put
+            }
 
             if (foundAddress == null) {
                 call.respond(
@@ -347,7 +372,7 @@ fun Route.recipientRouting(
                             call.respond(
                                 HttpStatusCode.OK,
                                 UpdateResponse(
-                                    RecipientShortDTO(
+                                    RecipientShortResponse(
                                         recipientId = recipientId,
                                         fullName = "${updatedRecipient.name} ${updatedRecipient.surname} ${updatedRecipient.patronymic ?: ""}".trim()
                                     )

@@ -1,27 +1,20 @@
 package com.example.database.token
 
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.insertAndGetId
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.sql.update
 
 class TokenDataSourceImpl: TokenDataSource {
-    override suspend fun insertToken(token: Token): Boolean {
-        try{
-            newSuspendedTransaction {
-                TokenTable.insert {
-                    it[userId] = token.userId
-                    it[refreshToken] = token.refreshToken
-                    it[issuedAt] = token.issuedAt
-                    it[expiresAt] = token.expiresAt
-                    it[revoked] = token.revoked
-                }
-            }
-            return true
-        } catch (_: Exception) {
-            return false
-        }
+    override suspend fun insertToken(token: Token): Int = newSuspendedTransaction {
+        TokenTable.insertAndGetId {
+            it[userId] = token.userId
+            it[refreshToken] = token.refreshToken
+            it[issuedAt] = token.issuedAt
+            it[expiresAt] = token.expiresAt
+            it[revoked] = token.revoked
+        }.value
     }
 
     override suspend fun findToken(userId: Int): Token? {

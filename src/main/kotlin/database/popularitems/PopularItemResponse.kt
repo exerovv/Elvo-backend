@@ -3,7 +3,7 @@ package com.example.database.popularitems
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class PopularItemDTO(
+data class PopularItemResponse(
     val popularItemId: Int,
     val title:String,
     val url: String

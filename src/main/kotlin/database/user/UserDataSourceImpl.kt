@@ -24,20 +24,21 @@ class UserDataSourceImpl : UserDataSource {
 
     override suspend fun insertUser(user: User): Int = newSuspendedTransaction {
         UserTable.insertAndGetId {
-            it[username] = user.username
-            it[password] = user.password
+            it[UserTable.username] = user.username
+            it[UserTable.password] = user.password
+            it[UserTable.avatarUrl] = "https://vk.com/club230873816"
         }.value
     }
 
-    override suspend fun getUserInfoById(userId: Int): UserInfo? = newSuspendedTransaction {
+    override suspend fun getUserInfoById(userId: Int): UserInfoResponse? = newSuspendedTransaction {
         UserTable
             .selectAll()
             .where { UserTable.id eq userId }
             .map {
-                UserInfo(
+                UserInfoResponse(
                     userId = userId,
                     username = it[UserTable.username],
-                    avatarUrl = it[UserTable.avatar_url]
+                    avatarUrl = it[UserTable.avatarUrl]
                 )
             }.firstOrNull()
     }

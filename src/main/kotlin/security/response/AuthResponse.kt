@@ -1,6 +1,6 @@
 package com.example.security.response
 
-import com.example.database.user.UserInfo
+import com.example.database.user.UserInfoResponse
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -11,5 +11,5 @@ data class AuthResponse(
     @SerialName("refresh_token")
     val refreshToken: String,
     @SerialName("user_info")
-    val userInfo: UserInfo
+    val userInfoResponse: UserInfoResponse
 )

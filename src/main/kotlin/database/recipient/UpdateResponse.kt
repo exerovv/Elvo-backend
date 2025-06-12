@@ -4,5 +4,5 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class UpdateResponse(
-    val updatedRecipient: RecipientShortDTO? = null
+    val updatedRecipient: RecipientShortResponse? = null
 )
