@@ -11,7 +11,7 @@ data class OrderDTO(
     val createdAt: Instant,
     val currentStatusId: Int,
     val globalStatus: String,
-    val isPaid: String,
+    val paymentStatus: String,
     val ruDescription: String,
     val chDescription: String,
     val link: String,

@@ -16,7 +16,7 @@ object OrderingTable : IntIdTable("orders") {
     val totalPrice = double("total_price").nullable()
     val current_status_id = integer("current_status_id").references(StatusesTable.id)
     val globalStatus = varchar("global_status", 32)
-    val isPaid = varchar("is_paid", 20)
+    val paymentStatus = varchar("payment_status", 20)
     val ruDescription = varchar("ru_description", 100)
     val chDescription = varchar("ch_description", 100)
     val link = varchar("poizon_link", 50)

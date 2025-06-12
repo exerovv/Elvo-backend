@@ -262,7 +262,7 @@ fun Route.orderRouting(
                     )
                     return@post
                 }
-                if(order.isPaid != PaymentStatus.REQUIRED_NOT_PAID.toString()) {
+                if(order.paymentStatus != PaymentStatus.REQUIRED_NOT_PAID.toString()) {
                     call.respond(
                         HttpStatusCode.BadRequest, ErrorResponse(
                             errorCode = ErrorCode.IMPOSSIBLE_TO_PAY
@@ -324,7 +324,7 @@ fun Route.orderRouting(
                 val status = updateRequest.status
                 var paymentStatus: String? = null
 
-                if (order.status == "CH_created") {
+                if (order.currentStatus == "CH_created") {
                     if (!OrderValidator.validateWeightAndPrice(weight, totalPrice)) {
                         call.respond(
                             HttpStatusCode.BadRequest, ErrorResponse(
@@ -397,9 +397,19 @@ fun Route.orderRouting(
 
         get("payment-status"){
             try{
+                val status = statusesDataSource.getStatusByCode("CH_received")
+                if(status == null){
+                    call.respond(
+                        HttpStatusCode.Conflict, ErrorResponse(
+                            errorCode = ErrorCode.SERVER_ERROR
+                        )
+                    )
+                    return@get
+                }
+                val statuses = orderingDataSource.getPaymentStatusesForArrivedOrders(status.id)
                 call.respond(
                     HttpStatusCode.OK,
-                    orderingDataSource.getPaymentStatusesForArrivedOrders("CH_received")
+                    statuses
                 )
             }catch(_: Exception){
                 call.respond(

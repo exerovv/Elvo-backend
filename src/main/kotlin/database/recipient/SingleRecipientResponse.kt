@@ -1,5 +1,6 @@
 package com.example.database.recipient
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -7,6 +8,7 @@ data class SingleRecipientResponse(
     val name: String,
     val surname: String,
     val patronymic: String,
+    @SerialName("full_name")
     val fullName: String,
     val phone: String,
     val city: String,

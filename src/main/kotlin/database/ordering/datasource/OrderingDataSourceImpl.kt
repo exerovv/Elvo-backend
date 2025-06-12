@@ -31,9 +31,9 @@ class OrderingDataSourceImpl : OrderingDataSource {
                 OrderShortResponse(
                     orderingId = it[OrderingTable.id].value,
                     orderName = it[OrderingTable.orderName],
-                    status = it[StatusesTable.name],
+                    currentStatus = it[StatusesTable.name],
                     globalStatus = it[OrderingTable.globalStatus],
-                    isPaid = it[OrderingTable.isPaid]
+                    paymentStatus = it[OrderingTable.paymentStatus]
                 )
             }
     }
@@ -54,7 +54,7 @@ class OrderingDataSourceImpl : OrderingDataSource {
                     weight = it[OrderingTable.weight],
                     totalPrice = it[OrderingTable.totalPrice],
                     globalStatus = it[StatusesTable.globalStatus],
-                    isPaid = it[OrderingTable.isPaid],
+                    paymentStatus = it[OrderingTable.paymentStatus],
                     ruDescription = it[OrderingTable.ruDescription],
                     chDescription = it[OrderingTable.chDescription],
                     link = it[OrderingTable.link],
@@ -78,9 +78,9 @@ class OrderingDataSourceImpl : OrderingDataSource {
                 OrderShortResponse(
                     orderingId = it[OrderingTable.id].value,
                     orderName = it[OrderingTable.orderName],
-                    status = it[StatusesTable.name],
+                    currentStatus = it[StatusesTable.name],
                     globalStatus = it[OrderingTable.globalStatus],
-                    isPaid = it[OrderingTable.isPaid]
+                    paymentStatus = it[OrderingTable.paymentStatus]
                 )
             }
             .firstOrNull()
@@ -97,7 +97,7 @@ class OrderingDataSourceImpl : OrderingDataSource {
                 it[OrderingTable.createdAt] = order.createdAt
                 it[OrderingTable.current_status_id] = order.currentStatusId
                 it[OrderingTable.globalStatus] = order.globalStatus
-                it[OrderingTable.isPaid] = order.isPaid
+                it[OrderingTable.paymentStatus] = order.paymentStatus
                 it[OrderingTable.ruDescription] = order.ruDescription
                 it[OrderingTable.chDescription] = order.chDescription
                 it[OrderingTable.link] = order.link
@@ -111,25 +111,25 @@ class OrderingDataSourceImpl : OrderingDataSource {
                 updateOrderingDTO.weight?.let { weight -> it[OrderingTable.weight] = weight }
                 updateOrderingDTO.totalPrice?.let { price -> it[OrderingTable.totalPrice] = price }
                 it[OrderingTable.current_status_id] = updateOrderingDTO.updateStatusId
-                updateOrderingDTO.paymentStatus?.let { paymentStatus -> it[OrderingTable.isPaid] = paymentStatus }
+                updateOrderingDTO.paymentStatus?.let { paymentStatus -> it[OrderingTable.paymentStatus] = paymentStatus }
             } > 0
         }
 
     override suspend fun makePayment(orderId: Int, paymentStatus: String): Boolean = newSuspendedTransaction {
         OrderingTable.update({ OrderingTable.id eq orderId }) {
-            it[OrderingTable.isPaid] = paymentStatus
+            it[OrderingTable.paymentStatus] = paymentStatus
         } > 0
     }
 
-    override suspend fun getPaymentStatusesForArrivedOrders(paymentStatus: String): List<OrderPaymentStatusResponse> {
+    override suspend fun getPaymentStatusesForArrivedOrders(currentStatusId: Int): List<OrderPaymentStatusResponse> {
         return newSuspendedTransaction {
             OrderingTable
                 .selectAll()
-                .where { OrderingTable.isPaid eq paymentStatus }
+                .where { OrderingTable.current_status_id eq currentStatusId }
                 .map {
                     OrderPaymentStatusResponse(
                         it[OrderingTable.id].value,
-                        it[OrderingTable.isPaid]
+                        it[OrderingTable.paymentStatus]
                     )
                 }
         }

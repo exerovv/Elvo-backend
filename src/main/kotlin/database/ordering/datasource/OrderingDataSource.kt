@@ -13,5 +13,5 @@ interface OrderingDataSource {
     suspend fun insertOrder(userId: Int, order: OrderDTO): Int
     suspend fun updateOrder(orderId: Int, updateOrderingDTO: UpdateOrderDTO): Boolean
     suspend fun makePayment(orderId: Int, paymentStatus: String): Boolean
-    suspend fun getPaymentStatusesForArrivedOrders(paymentStatus: String): List<OrderPaymentStatusResponse>
+    suspend fun getPaymentStatusesForArrivedOrders(currentStatusId: Int): List<OrderPaymentStatusResponse>
 }
