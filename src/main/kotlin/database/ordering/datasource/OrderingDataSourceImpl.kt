@@ -39,10 +39,9 @@ class OrderingDataSourceImpl : OrderingDataSource {
     }
 
 
-
     override suspend fun getOrderFullById(orderingId: Int): OrderFullResponse? = newSuspendedTransaction {
         OrderingTable
-            .join(StatusesTable, JoinType.INNER, OrderingTable.current_status_id eq StatusesTable.id)
+            .join(StatusesTable, JoinType.INNER, OrderingTable.current_status_id, StatusesTable.id)
             .selectAll()
             .where(OrderingTable.id eq orderingId)
             .map {

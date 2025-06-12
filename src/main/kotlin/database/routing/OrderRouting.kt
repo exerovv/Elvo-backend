@@ -394,5 +394,21 @@ fun Route.orderRouting(
                 updatedOrder
             )
         }
+
+        get("payment-status"){
+            try{
+                call.respond(
+                    HttpStatusCode.OK,
+                    orderingDataSource.getPaymentStatusesForArrivedOrders("CH_received")
+                )
+            }catch(_: Exception){
+                call.respond(
+                    HttpStatusCode.Conflict, ErrorResponse(
+                        errorCode = ErrorCode.SERVER_ERROR
+                    )
+                )
+                return@get
+            }
+        }
     }
 }
