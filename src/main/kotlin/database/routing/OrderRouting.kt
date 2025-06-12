@@ -133,7 +133,7 @@ fun Route.orderRouting(
                 return@post
             }
 
-            if (OrderValidator.validateAllFields(
+            if (!OrderValidator.validateAllFields(
                     addRequest.recipientId,
                     addRequest.orderName,
                     addRequest.trackNumber,

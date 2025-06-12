@@ -1,5 +1,8 @@
 package com.example.database.ordering.request
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class AddOrderRequest(
     val recipientId: Int?,
     val orderName: String?,

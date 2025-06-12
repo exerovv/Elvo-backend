@@ -1,7 +1,9 @@
 package com.example.database.ordering.dto
 
 import kotlinx.datetime.Instant
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class OrderDTO(
     val recipientId: Int,
     val orderName: String,

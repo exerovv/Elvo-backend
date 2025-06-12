@@ -253,7 +253,7 @@ fun Application.authRouting(
 
             val foundToken = tokenDataSource.findToken(userId)
 
-            if (foundToken == null || foundToken.expiresAt > Clock.System.now()) {
+            if (foundToken == null || foundToken.expiresAt < Clock.System.now()) {
                 call.respond(
                     HttpStatusCode.Unauthorized, ErrorResponse(
                         errorCode = ErrorCode.UNAUTHORIZED

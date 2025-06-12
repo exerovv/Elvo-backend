@@ -14,7 +14,7 @@ class OrderStatusesDataSourceImpl: OrderStatusesDataSource {
     override suspend fun insertNewStatus(newRecord: OrderStatusDTO) {
         return newSuspendedTransaction {
             OrderStatusesTable.insert {
-                it[OrderStatusesTable.orderId] = orderId
+                it[OrderStatusesTable.orderId] = newRecord.orderId
                 it[OrderStatusesTable.statusId] = newRecord.statusId
                 it[OrderStatusesTable.createdAt] = newRecord.createdAt
             }
@@ -27,14 +27,15 @@ class OrderStatusesDataSourceImpl: OrderStatusesDataSource {
                 .join(
                     StatusesTable,
                     joinType = JoinType.INNER,
-                    OrderStatusesTable.statusId eq StatusesTable.id
+                    onColumn = OrderStatusesTable.statusId,
+                    otherColumn = StatusesTable.id
                 )
                 .selectAll()
-                .where{ OrderStatusesTable.orderId eq orderId }
+                .where { OrderStatusesTable.orderId eq orderId }
                 .map {
                     OrderStatusResponse(
                         it[StatusesTable.name],
-                        it[StatusesTable.name],
+                        it[StatusesTable.icon],
                         it[OrderStatusesTable.createdAt]
                     )
                 }

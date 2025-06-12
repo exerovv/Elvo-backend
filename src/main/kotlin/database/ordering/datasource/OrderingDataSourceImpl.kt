@@ -18,11 +18,13 @@ import org.jetbrains.exposed.sql.update
 class OrderingDataSourceImpl : OrderingDataSource {
 
     override suspend fun getAllOrdersForUser(userId: Int): List<OrderShortResponse> = newSuspendedTransaction {
-        OrderingTable.join(
-            StatusesTable,
-            JoinType.INNER,
-            OrderingTable.current_status_id eq StatusesTable.id
-        )
+        OrderingTable
+            .join(
+                StatusesTable,
+                JoinType.INNER,
+                onColumn = OrderingTable.current_status_id,
+                otherColumn = StatusesTable.id
+            )
             .selectAll()
             .where { OrderingTable.userId eq userId }
             .map {
@@ -35,6 +37,8 @@ class OrderingDataSourceImpl : OrderingDataSource {
                 )
             }
     }
+
+
 
     override suspend fun getOrderFullById(orderingId: Int): OrderFullResponse? = newSuspendedTransaction {
         OrderingTable
@@ -62,13 +66,15 @@ class OrderingDataSourceImpl : OrderingDataSource {
     }
 
     override suspend fun getOrderShortById(orderingId: Int): OrderShortResponse? = newSuspendedTransaction {
-        OrderingTable.join(
-            StatusesTable,
-            JoinType.INNER,
-            OrderingTable.current_status_id eq StatusesTable.id
-        )
+        OrderingTable
+            .join(
+                StatusesTable,
+                JoinType.INNER,
+                onColumn = OrderingTable.current_status_id,
+                otherColumn = StatusesTable.id
+            )
             .selectAll()
-            .where{ OrderingTable.id eq orderingId }
+            .where { OrderingTable.id eq orderingId }
             .map {
                 OrderShortResponse(
                     orderingId = it[OrderingTable.id].value,
@@ -80,6 +86,7 @@ class OrderingDataSourceImpl : OrderingDataSource {
             }
             .firstOrNull()
     }
+
 
     override suspend fun insertOrder(userId: Int, order: OrderDTO): Int =
         newSuspendedTransaction {
