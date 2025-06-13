@@ -11,5 +11,5 @@ data class AuthResponse(
     @SerialName("refresh_token")
     val refreshToken: String,
     @SerialName("user_info")
-    val userInfoResponse: UserInfoResponse
+    val userInfoResponse: UserInfoResponse? = null
 )

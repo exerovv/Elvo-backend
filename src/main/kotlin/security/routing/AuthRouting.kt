@@ -9,7 +9,6 @@ import com.example.security.hashing.HashingService
 import com.example.security.request.AuthRequest
 import com.example.security.request.RefreshRequest
 import com.example.security.response.AuthResponse
-import com.example.security.response.TokenResponse
 import com.example.security.token.*
 import com.example.utils.ErrorCode
 import io.ktor.http.*
@@ -292,7 +291,7 @@ fun Application.authRouting(
                 }
                 call.respond(
                     status = HttpStatusCode.OK,
-                    message = TokenResponse(
+                    message = AuthResponse(
                         accessToken = newAccessToken,
                         refreshToken = refreshToken
                     )
