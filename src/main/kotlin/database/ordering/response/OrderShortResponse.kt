@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class OrderShortResponse(
-    @SerialName("recipient_id")
+    @SerialName("ordering_id")
     val orderingId: Int,
     @SerialName("order_name")
     val orderName: String,

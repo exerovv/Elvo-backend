@@ -1,22 +1,22 @@
 package com.example.database.routing
 
 import com.example.core.ErrorResponse
-import com.example.database.ordering.request.AddOrderRequest
-import com.example.database.ordering.response.OrderFullInfoResponse
-import com.example.database.ordering.dto.OrderDTO
-import com.example.database.ordering.dto.OrderStatusDTO
 import com.example.database.ordering.datasource.OrderStatusesDataSource
 import com.example.database.ordering.datasource.OrderingDataSource
-import com.example.database.ordering.utils.PaymentStatus
 import com.example.database.ordering.datasource.StatusesDataSource
+import com.example.database.ordering.dto.OrderDTO
+import com.example.database.ordering.dto.OrderStatusDTO
 import com.example.database.ordering.dto.UpdateOrderDTO
+import com.example.database.ordering.request.AddOrderRequest
 import com.example.database.ordering.request.UpdateOrderRequest
+import com.example.database.ordering.response.OrderFullInfoResponse
+import com.example.database.ordering.utils.PaymentStatus
 import com.example.database.recipient.RecipientDataSource
 import com.example.database.token.getUserIdClaim
 import com.example.utils.ErrorCode
 import com.example.utils.OrderValidator
 import io.ktor.http.*
-import io.ktor.server.request.receiveNullable
+import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.datetime.Clock
@@ -262,7 +262,7 @@ fun Route.orderRouting(
                     )
                     return@post
                 }
-                if(order.paymentStatus != PaymentStatus.REQUIRED_NOT_PAID.toString()) {
+                if (order.paymentStatus != PaymentStatus.REQUIRED_NOT_PAID.toString()) {
                     call.respond(
                         HttpStatusCode.BadRequest, ErrorResponse(
                             errorCode = ErrorCode.IMPOSSIBLE_TO_PAY
@@ -308,7 +308,7 @@ fun Route.orderRouting(
                 return@put
             }
 
-            val updatedOrder = try {
+            try {
                 val order = orderingDataSource.getOrderShortById(orderId)
                 if (order == null) {
                     call.respond(
@@ -369,18 +369,7 @@ fun Route.orderRouting(
                 )
 
                 orderStatusesDataSource.insertNewStatus(OrderStatusDTO(orderId, updateStatusId, Clock.System.now()))
-
-                orderingDataSource.getOrderShortById(orderId)
-            }catch (_: Exception){
-                call.respond(
-                    HttpStatusCode.Conflict, ErrorResponse(
-                        errorCode = ErrorCode.SERVER_ERROR
-                    )
-                )
-                return@put
-            }
-
-            if(updatedOrder == null){
+            } catch (_: Exception) {
                 call.respond(
                     HttpStatusCode.Conflict, ErrorResponse(
                         errorCode = ErrorCode.SERVER_ERROR
@@ -390,15 +379,14 @@ fun Route.orderRouting(
             }
 
             call.respond(
-                HttpStatusCode.OK,
-                updatedOrder
+                HttpStatusCode.OK
             )
         }
 
-        get("payment-status"){
-            try{
+        get("payment-status") {
+            try {
                 val status = statusesDataSource.getStatusByCode("CH_received")
-                if(status == null){
+                if (status == null) {
                     call.respond(
                         HttpStatusCode.Conflict, ErrorResponse(
                             errorCode = ErrorCode.SERVER_ERROR
@@ -411,7 +399,7 @@ fun Route.orderRouting(
                     HttpStatusCode.OK,
                     statuses
                 )
-            }catch(_: Exception){
+            } catch (_: Exception) {
                 call.respond(
                     HttpStatusCode.Conflict, ErrorResponse(
                         errorCode = ErrorCode.SERVER_ERROR
@@ -420,5 +408,40 @@ fun Route.orderRouting(
                 return@get
             }
         }
+
+//        sse("status-updates/{id}", serialize = { typeInfo, it ->
+//            val serializer = Json.serializersModule.serializer(typeInfo.kotlinType!!)
+//            Json.encodeToString(serializer, it)
+//        }) {
+//            val userId = call.getUserIdClaim() ?: run {
+//                call.respond(
+//                    HttpStatusCode.Conflict, ErrorResponse(
+//                        errorCode = ErrorCode.SERVER_ERROR
+//                    )
+//                )
+//                return@sse
+//            }
+//
+//            try {
+//                val order = orderingDataSource.getOrderShortById(orderId)
+//                if (order == null){
+//                    call.respond(
+//                        HttpStatusCode.BadRequest, ErrorResponse(
+//                            errorCode = ErrorCode.SERVER_ERROR
+//                        )
+//                    )
+//                    return@sse
+//                }
+//                send(order)
+//            }catch (_: Exception){
+//                call.respond(
+//                    HttpStatusCode.BadRequest, ErrorResponse(
+//                        errorCode = ErrorCode.SERVER_ERROR
+//                    )
+//                )
+//                return@sse
+//            }
+//
+//        }
     }
 }
