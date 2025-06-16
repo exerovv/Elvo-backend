@@ -10,6 +10,7 @@ import com.example.database.ordering.dto.UpdateOrderDTO
 import com.example.database.ordering.request.AddOrderRequest
 import com.example.database.ordering.request.UpdateOrderRequest
 import com.example.database.ordering.response.OrderFullInfoResponse
+import com.example.database.ordering.response.PaymentStatusResponse
 import com.example.database.ordering.utils.PaymentStatus
 import com.example.database.recipient.RecipientDataSource
 import com.example.database.token.getUserIdClaim
@@ -127,7 +128,7 @@ fun Route.orderRouting(
             if (addRequest == null) {
                 call.respond(
                     HttpStatusCode.BadRequest, ErrorResponse(
-                        errorCode = ErrorCode.INCORRECT_CREDENTIALS
+                        errorCode = ErrorCode.INCORRECT_ORDER_DATA
                     )
                 )
                 return@post
@@ -281,7 +282,9 @@ fun Route.orderRouting(
             }
             call.respond(
                 HttpStatusCode.OK,
-                PaymentStatus.REQUIRED_PAID.toString()
+                PaymentStatusResponse(
+                    PaymentStatus.REQUIRED_PAID.toString()
+                )
             )
         }
 
