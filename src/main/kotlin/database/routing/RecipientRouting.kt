@@ -246,7 +246,7 @@ fun Route.recipientRouting(
             val flat = updateRequest.flat
             val floor = updateRequest.floor
 
-            if (RecipientValidator.validateAllFields(
+            if (!RecipientValidator.validateAllFields(
                     name,
                     surname,
                     patronymic,
