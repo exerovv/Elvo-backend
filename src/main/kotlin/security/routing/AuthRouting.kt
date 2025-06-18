@@ -301,7 +301,7 @@ fun Application.authRouting(
 
         }
 
-        post("logout"){
+        post("{id}/logout"){
             val userId = call.parameters["id"]?.toInt()
 
             if (userId == null) {
