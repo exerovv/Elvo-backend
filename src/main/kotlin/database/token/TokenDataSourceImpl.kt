@@ -1,6 +1,7 @@
 package com.example.database.token
 
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insertAndGetId
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.experimental.newSuspendedTransaction
@@ -45,6 +46,14 @@ class TokenDataSourceImpl: TokenDataSource {
                 it[TokenTable.refreshToken] = token.refreshToken
                 it[issuedAt] = token.issuedAt
                 it[TokenTable.expiresAt] = token.expiresAt
+            } > 0
+        }
+    }
+
+    override suspend fun deleteToken(userId: Int): Boolean {
+        return newSuspendedTransaction {
+            TokenTable.deleteWhere{
+                TokenTable.userId eq userId
             } > 0
         }
     }

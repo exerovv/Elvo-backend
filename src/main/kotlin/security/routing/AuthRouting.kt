@@ -3,6 +3,7 @@ package com.example.security.routing
 import com.example.core.ErrorResponse
 import com.example.database.token.Token
 import com.example.database.token.TokenDataSource
+import com.example.database.token.getUserIdClaim
 import com.example.database.user.User
 import com.example.database.user.UserDataSource
 import com.example.security.hashing.HashingService
@@ -299,6 +300,28 @@ fun Application.authRouting(
             }
 
 
+        }
+
+        post("logout"){
+            val userid = call.getUserIdClaim() ?: run {
+                call.respond(
+                    HttpStatusCode.Conflict, ErrorResponse(
+                        errorCode = ErrorCode.SERVER_ERROR
+                    )
+                )
+                return@post
+            }
+
+            try{
+                tokenDataSource.deleteToken(userid)
+            }catch(_: Exception){
+                call.respond(
+                    HttpStatusCode.Conflict, ErrorResponse(
+                        errorCode = ErrorCode.SERVER_ERROR
+                    )
+                )
+                return@post
+            }
         }
     }
 }
