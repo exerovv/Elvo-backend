@@ -14,6 +14,7 @@ import com.example.security.token.*
 import com.example.utils.ErrorCode
 import io.ktor.http.*
 import io.ktor.server.application.*
+import io.ktor.server.auth.authenticate
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -298,29 +299,29 @@ fun Application.authRouting(
                     )
                 )
             }
-
-
         }
 
-        post("logout"){
-            val userid = call.getUserIdClaim() ?: run {
-                call.respond(
-                    HttpStatusCode.Conflict, ErrorResponse(
-                        errorCode = ErrorCode.SERVER_ERROR
+        authenticate("jwt-auth"){
+            post("logout"){
+                val userid = call.getUserIdClaim() ?: run {
+                    call.respond(
+                        HttpStatusCode.Conflict, ErrorResponse(
+                            errorCode = ErrorCode.SERVER_ERROR
+                        )
                     )
-                )
-                return@post
-            }
+                    return@post
+                }
 
-            try{
-                tokenDataSource.deleteToken(userid)
-            }catch(_: Exception){
-                call.respond(
-                    HttpStatusCode.Conflict, ErrorResponse(
-                        errorCode = ErrorCode.SERVER_ERROR
+                try{
+                    tokenDataSource.deleteToken(userid)
+                }catch(_: Exception){
+                    call.respond(
+                        HttpStatusCode.Conflict, ErrorResponse(
+                            errorCode = ErrorCode.SERVER_ERROR
+                        )
                     )
-                )
-                return@post
+                    return@post
+                }
             }
         }
     }
