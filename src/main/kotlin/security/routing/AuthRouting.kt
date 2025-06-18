@@ -3,7 +3,6 @@ package com.example.security.routing
 import com.example.core.ErrorResponse
 import com.example.database.token.Token
 import com.example.database.token.TokenDataSource
-import com.example.database.token.getUserIdClaim
 import com.example.database.user.User
 import com.example.database.user.UserDataSource
 import com.example.security.hashing.HashingService
@@ -94,7 +93,7 @@ fun Application.authRouting(
                     return@post
                 }
 
-                if(userInfo == null){
+                if (userInfo == null) {
                     call.respond(
                         HttpStatusCode.BadRequest,
                         ErrorResponse(
@@ -157,9 +156,9 @@ fun Application.authRouting(
                 return@post
             }
 
-            val userInfo = try{
+            val userInfo = try {
                 userDataSource.getUserInfoById(foundUser.userId)
-            }catch (_: Exception){
+            } catch (_: Exception) {
                 call.respond(
                     HttpStatusCode.BadRequest,
                     ErrorResponse(
@@ -169,7 +168,7 @@ fun Application.authRouting(
                 return@post
             }
 
-            if(userInfo == null){
+            if (userInfo == null) {
                 call.respond(
                     HttpStatusCode.BadRequest,
                     ErrorResponse(
@@ -190,14 +189,14 @@ fun Application.authRouting(
             val refreshToken = refreshTokenService.generate(refreshTokenConfig)
 
             val result = tokenDataSource.updateToken(
-                    Token(
-                        foundUser.userId,
-                        refreshToken,
-                        Clock.System.now(),
-                        Clock.System.now().plus(refreshTokenConfig.expiresIn.milliseconds),
-                        false
-                    )
+                Token(
+                    foundUser.userId,
+                    refreshToken,
+                    Clock.System.now(),
+                    Clock.System.now().plus(refreshTokenConfig.expiresIn.milliseconds),
+                    false
                 )
+            )
 
             if (!result) {
                 call.respond(
@@ -298,23 +297,22 @@ fun Application.authRouting(
                     )
                 )
             }
-
-
         }
+        post("{id}/logout") {
+            val userId = call.parameters["id"]?.toInt()
 
-        post("logout"){
-            val userid = call.getUserIdClaim() ?: run {
+            if (userId == null) {
                 call.respond(
-                    HttpStatusCode.Conflict, ErrorResponse(
-                        errorCode = ErrorCode.SERVER_ERROR
+                    HttpStatusCode.BadRequest, ErrorResponse(
+                        errorCode = ErrorCode.INCORRECT_CREDENTIALS
                     )
                 )
                 return@post
             }
 
-            try{
-                tokenDataSource.deleteToken(userid)
-            }catch(_: Exception){
+            try {
+                tokenDataSource.deleteToken(userId)
+            } catch (_: Exception) {
                 call.respond(
                     HttpStatusCode.Conflict, ErrorResponse(
                         errorCode = ErrorCode.SERVER_ERROR
