@@ -228,7 +228,7 @@ fun Application.authRouting(
             )
         }
 
-        post("{id}/refresh") {
+        post("refresh/{id}") {
             val requestData =
                 runCatching<RefreshRequest?> { call.receiveNullable<RefreshRequest>() }.getOrNull() ?: run {
                     call.respond(
@@ -307,11 +307,9 @@ fun Application.authRouting(
                     )
                 )
             }
-
-
         }
 
-        post("{id}/logout") {
+        post("logout/{id}") {
             val userId = call.parameters["id"]?.toInt()
 
             if (userId == null) {
@@ -325,6 +323,7 @@ fun Application.authRouting(
 
             try {
                 tokenDataSource.deleteToken(userId)
+                call.respond(HttpStatusCode.OK)
             } catch (_: Exception) {
                 call.respond(
                     HttpStatusCode.Conflict, ErrorResponse(
