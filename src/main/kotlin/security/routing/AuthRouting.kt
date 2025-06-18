@@ -60,7 +60,17 @@ fun Application.authRouting(
                     )
                 )
                 return@post
-            } else {
+            }
+            if(userDataSource.getUserByUsername(requestData.username) != null){
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    ErrorResponse(
+                        errorCode = ErrorCode.USER_ALREADY_EXISTS
+                    )
+                )
+                return@post
+            }
+            else {
                 val hash = hashingService.generateHash(requestData.password)
                 val user = User(
                     username = requestData.username,
@@ -87,13 +97,13 @@ fun Application.authRouting(
                     call.respond(
                         HttpStatusCode.BadRequest,
                         ErrorResponse(
-                            errorCode = ErrorCode.USER_ALREADY_EXISTS
+                            errorCode = ErrorCode.SERVER_ERROR
                         )
                     )
                     return@post
                 }
 
-                if(userInfo == null){
+                if (userInfo == null) {
                     call.respond(
                         HttpStatusCode.BadRequest,
                         ErrorResponse(
@@ -156,9 +166,9 @@ fun Application.authRouting(
                 return@post
             }
 
-            val userInfo = try{
+            val userInfo = try {
                 userDataSource.getUserInfoById(foundUser.userId)
-            }catch (_: Exception){
+            } catch (_: Exception) {
                 call.respond(
                     HttpStatusCode.BadRequest,
                     ErrorResponse(
@@ -168,7 +178,7 @@ fun Application.authRouting(
                 return@post
             }
 
-            if(userInfo == null){
+            if (userInfo == null) {
                 call.respond(
                     HttpStatusCode.BadRequest,
                     ErrorResponse(
@@ -189,14 +199,14 @@ fun Application.authRouting(
             val refreshToken = refreshTokenService.generate(refreshTokenConfig)
 
             val result = tokenDataSource.updateToken(
-                    Token(
-                        foundUser.userId,
-                        refreshToken,
-                        Clock.System.now(),
-                        Clock.System.now().plus(refreshTokenConfig.expiresIn.milliseconds),
-                        false
-                    )
+                Token(
+                    foundUser.userId,
+                    refreshToken,
+                    Clock.System.now(),
+                    Clock.System.now().plus(refreshTokenConfig.expiresIn.milliseconds),
+                    false
                 )
+            )
 
             if (!result) {
                 call.respond(
@@ -252,7 +262,7 @@ fun Application.authRouting(
 
             val foundToken = tokenDataSource.findToken(userId)
 
-            if (foundToken == null || foundToken.expiresAt < Clock.System.now()) {
+            if (foundToken == null || foundToken.expiresAt < Clock.System.now() || foundToken.revoked) {
                 call.respond(
                     HttpStatusCode.Unauthorized, ErrorResponse(
                         errorCode = ErrorCode.UNAUTHORIZED
@@ -301,7 +311,7 @@ fun Application.authRouting(
 
         }
 
-        post("{id}/logout"){
+        post("{id}/logout") {
             val userId = call.parameters["id"]?.toInt()
 
             if (userId == null) {
@@ -313,9 +323,9 @@ fun Application.authRouting(
                 return@post
             }
 
-            try{
+            try {
                 tokenDataSource.deleteToken(userId)
-            }catch(_: Exception){
+            } catch (_: Exception) {
                 call.respond(
                     HttpStatusCode.Conflict, ErrorResponse(
                         errorCode = ErrorCode.SERVER_ERROR

@@ -26,7 +26,7 @@ class UserDataSourceImpl : UserDataSource {
         UserTable.insertAndGetId {
             it[UserTable.username] = user.username
             it[UserTable.password] = user.password
-            it[UserTable.avatarUrl] = "https://vk.com/club230873816"
+            it[UserTable.avatarUrl] = "https://sun9-2.userapi.com/impg/NvZm7CqNeuPqmqUH2cWmenSe0soMk0dLmTcGOQ/KvoKt4kpESU.jpg?size=1024x1024&quality=95&sign=aaee1fdc1db93f6da3eb0556f4b9566f&type=album"
         }.value
     }
 
