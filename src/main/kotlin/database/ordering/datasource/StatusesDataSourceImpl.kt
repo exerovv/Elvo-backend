@@ -19,4 +19,18 @@ class StatusesDataSourceImpl : StatusesDataSource {
             }
             .firstOrNull()
     }
+
+    override suspend fun getStatusById(statusId: Int): StatusDTO? = newSuspendedTransaction {
+        StatusesTable
+            .selectAll()
+            .where { StatusesTable.id eq statusId }
+            .map {
+                StatusDTO(
+                    id = it[StatusesTable.id].value,
+                    name = it[StatusesTable.name],
+                    globalStatus = it[StatusesTable.globalStatus]
+                )
+            }
+            .firstOrNull()
+    }
 }

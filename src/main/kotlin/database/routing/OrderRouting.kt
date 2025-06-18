@@ -331,7 +331,7 @@ fun Route.orderRouting(
                     if (!OrderValidator.validateWeightAndPrice(weight, totalPrice)) {
                         call.respond(
                             HttpStatusCode.BadRequest, ErrorResponse(
-                                errorCode = ErrorCode.INCORRECT_CREDENTIALS
+                                errorCode = ErrorCode.PROVIDE_WEIGHT_PRICE
                             )
                         )
                         return@put
@@ -351,6 +351,16 @@ fun Route.orderRouting(
                 }
 
                 val updateStatusId = currentStatus.id + 1
+                val updateStatus = statusesDataSource.getStatusById(updateStatusId)
+
+                if(updateStatus == null){
+                    call.respond(
+                        HttpStatusCode.Conflict, ErrorResponse(
+                            errorCode = ErrorCode.SERVER_ERROR
+                        )
+                    )
+                    return@put
+                }
 
                 if (!OrderValidator.validateUpdateStatus(updateStatusId)) {
                     call.respond(
@@ -367,6 +377,7 @@ fun Route.orderRouting(
                         weight,
                         totalPrice,
                         updateStatusId,
+                        updateStatus.globalStatus,
                         paymentStatus
                     )
                 )

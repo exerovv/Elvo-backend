@@ -111,6 +111,7 @@ class OrderingDataSourceImpl : OrderingDataSource {
                 updateOrderingDTO.weight?.let { weight -> it[OrderingTable.weight] = weight }
                 updateOrderingDTO.totalPrice?.let { price -> it[OrderingTable.totalPrice] = price }
                 it[OrderingTable.current_status_id] = updateOrderingDTO.updateStatusId
+                it[OrderingTable.globalStatus] = updateOrderingDTO.globalStatus
                 updateOrderingDTO.paymentStatus?.let { paymentStatus -> it[OrderingTable.paymentStatus] = paymentStatus }
             } > 0
         }
